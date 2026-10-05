@@ -1,0 +1,31 @@
+@model List<FinancialGoal>
+@{
+    ViewData["Title"] = "Metas";
+}
+<div class="page-actions"><p class="page-intro">Defina metas de faturamento para orientar os indicadores da Barbearia.</p></div>
+
+<div class="services-layout">
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Faturamento</span><h2>Metas cadastradas</h2></div></div>
+@if(Model.Count == 0){<div class="empty-mini">Crie a meta do mês para ativar o cálculo diário no dashboard.</div>}
+<div class="service-list">
+@foreach(var goal in Model)
+{
+    <div class="service-row">
+        <div><strong>@goal.Name</strong><span>@goal.TargetAmount.ToString("C") · @(goal.Deadline.HasValue ? goal.Deadline.Value.ToString("dd/MM/yyyy") : "sem prazo")</span></div>
+        <form asp-action="Delete" asp-route-id="@goal.Id" method="post"><button class="icon-btn" type="submit">×</button></form>
+    </div>
+}
+</div>
+</section>
+
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Nova</span><h2>Criar meta</h2></div></div>
+<form asp-action="Create" method="post" class="smart-form compact">
+<label><span>Nome</span><input name="name" required placeholder="Ex.: Faturamento Outubro" /></label>
+<label><span>Valor alvo</span><input name="targetAmount" type="number" step="0.01" min="0.01" required /></label>
+<label><span>Prazo</span><input name="deadline" type="date" /></label>
+<button class="primary-btn" type="submit">Criar meta</button>
+</form>
+</section>
+</div>
