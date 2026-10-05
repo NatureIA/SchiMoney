@@ -1,0 +1,39 @@
+@model List<FinancialGoal>
+@{
+    ViewData["Title"] = "Metas";
+}
+<div class="page-actions"><p class="page-intro">Objetivos financeiros exclusivos do módulo Pessoal.</p></div>
+
+<div class="services-layout">
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Objetivos</span><h2>Suas metas</h2></div></div>
+@if(Model.Count == 0){<div class="empty-mini">Crie sua primeira meta financeira.</div>}
+<div class="category-list">
+@foreach(var goal in Model)
+{
+    var pct = goal.TargetAmount <= 0 ? 0 : Math.Min(100, goal.CurrentAmount / goal.TargetAmount * 100);
+    <div class="category-item">
+        <div><strong>@goal.Name</strong><span>@goal.CurrentAmount.ToString("C") / @goal.TargetAmount.ToString("C")</span></div>
+        <div class="progress"><i style="width:@pct.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div>
+        <form asp-action="Update" method="post" class="inline-update">
+            <input type="hidden" name="id" value="@goal.Id" />
+            <input name="currentAmount" type="number" step="0.01" value="@goal.CurrentAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+            <button class="secondary-btn" type="submit">Atualizar</button>
+            <button class="icon-btn" type="submit" formaction="@Url.Action("Delete")" formmethod="post">×</button>
+        </form>
+    </div>
+}
+</div>
+</section>
+
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Nova</span><h2>Criar meta</h2></div></div>
+<form asp-action="Create" method="post" class="smart-form compact">
+<label><span>Nome</span><input name="name" required placeholder="Ex.: Reserva de emergência" /></label>
+<label><span>Valor alvo</span><input name="targetAmount" type="number" step="0.01" min="0.01" required /></label>
+<label><span>Valor atual</span><input name="currentAmount" type="number" step="0.01" min="0" value="0" /></label>
+<label><span>Prazo</span><input name="deadline" type="date" /></label>
+<button class="primary-btn" type="submit">Criar meta</button>
+</form>
+</section>
+</div>
