@@ -1,0 +1,41 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Entrar";
+}
+<div class="auth-shell">
+    <section class="auth-panel">
+        <div class="brand brand-large"><span class="brand-mark">S</span><span>SchiMoney</span></div>
+        <div class="auth-copy">
+            <span class="eyebrow">Controle financeiro inteligente</span>
+            <h1>Clareza para o seu dinheiro. Controle para o seu negócio.</h1>
+            <p>Dois ambientes independentes, uma experiência simples e precisa.</p>
+        </div>
+        <div class="auth-foot">Pessoal · Barbearia</div>
+    </section>
+
+    <section class="auth-form-wrap">
+        <form class="auth-form" method="post">
+            <div>
+                <span class="eyebrow">Acesso seguro</span>
+                <h2>Bem-vindo de volta</h2>
+                <p>Entre para acessar o SchiMoney.</p>
+            </div>
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
+            <label>
+                <span>E-mail</span>
+                <input asp-for="Email" autocomplete="email" placeholder="seu@email.com" />
+                <span asp-validation-for="Email" class="validation"></span>
+            </label>
+            <label>
+                <span>Senha</span>
+                <input asp-for="Password" autocomplete="current-password" placeholder="••••••••••" />
+                <span asp-validation-for="Password" class="validation"></span>
+            </label>
+            <label class="check-row">
+                <input asp-for="RememberMe" />
+                <span>Manter conectado</span>
+            </label>
+            <button class="primary-btn full" type="submit">Entrar</button>
+        </form>
+    </section>
+</div>
