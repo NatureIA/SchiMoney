@@ -1,0 +1,80 @@
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+    var isPersonal = area == "Personal";
+    var isBarbershop = area == "Barbershop";
+    var title = ViewData["Title"]?.ToString() ?? "SchiMoney";
+}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0c0d0e" />
+    <title>@title · SchiMoney</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="@(area is null ? "standalone" : "")">
+@if (User.Identity?.IsAuthenticated == true && area is not null)
+{
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" asp-controller="Home" asp-action="Index" asp-area="">
+                <span class="brand-mark">S</span>
+                <span>SchiMoney</span>
+            </a>
+
+            <div class="module-label">
+                <span class="module-dot @(isPersonal ? "personal" : "business")"></span>
+                @(isPersonal ? "Pessoal" : "Barbearia")
+            </div>
+
+            <nav class="nav">
+                @if (isPersonal)
+                {
+                    <a asp-area="Personal" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
+                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Index">Lançamentos</a>
+                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Receita">Nova receita</a>
+                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Despesa">Nova despesa</a>
+                }
+                else if (isBarbershop)
+                {
+                    <a asp-area="Barbershop" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
+                    <a asp-area="Barbershop" asp-controller="Sales" asp-action="Index">Faturamento</a>
+                    <a asp-area="Barbershop" asp-controller="Expenses" asp-action="Index">Despesas</a>
+                    <a asp-area="Barbershop" asp-controller="Services" asp-action="Index">Serviços</a>
+                }
+            </nav>
+
+            <div class="sidebar-bottom">
+                <a class="switch-module" asp-controller="Home" asp-action="Index" asp-area="">
+                    <span>Trocar módulo</span><span>↗</span>
+                </a>
+                <form asp-controller="Account" asp-action="Logout" asp-area="" method="post">
+                    <button class="logout" type="submit">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <button class="menu-button" type="button" data-menu>☰</button>
+                <div>
+                    <div class="eyebrow">@(isPersonal ? "Finanças pessoais" : "Gestão da barbearia")</div>
+                    <h1>@title</h1>
+                </div>
+                <div class="user-chip">@User.Identity.Name</div>
+            </header>
+            <section class="content">
+                @RenderBody()
+            </section>
+        </main>
+    </div>
+}
+else
+{
+    @RenderBody()
+}
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
