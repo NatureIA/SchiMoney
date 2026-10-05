@@ -31,7 +31,7 @@ jobs:
         run: dotnet build src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false --no-build
+        run: dotnet publish src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false
 
       - name: Deploy to MonsterASP
         if: ${{ env.SERVER_PASSWORD != '' }}
