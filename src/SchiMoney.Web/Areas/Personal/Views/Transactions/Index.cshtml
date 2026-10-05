@@ -11,14 +11,14 @@
     <input name="q" value="@ViewBag.Q" placeholder="Buscar descrição, categoria ou conta..." />
     <select name="type">
         <option value="">Receita + despesa</option>
-        <option value="Receita" selected="@(ViewBag.Type=="Receita")">Receita</option>
-        <option value="Despesa" selected="@(ViewBag.Type=="Despesa")">Despesa</option>
+        <option value="Receita" selected="@(ViewBag.Type=="Receita" ? "selected" : null)">Receita</option>
+        <option value="Despesa" selected="@(ViewBag.Type=="Despesa" ? "selected" : null)">Despesa</option>
     </select>
     <select name="status">
         <option value="">Todos os status</option>
-        <option value="Pago" selected="@(ViewBag.Status=="Pago")">Pago</option>
-        <option value="Pendente" selected="@(ViewBag.Status=="Pendente")">Pendente</option>
-        <option value="Vencido" selected="@(ViewBag.Status=="Vencido")">Vencido</option>
+        <option value="Pago" selected="@(ViewBag.Status=="Pago" ? "selected" : null)">Pago</option>
+        <option value="Pendente" selected="@(ViewBag.Status=="Pendente" ? "selected" : null)">Pendente</option>
+        <option value="Vencido" selected="@(ViewBag.Status=="Vencido" ? "selected" : null)">Vencido</option>
     </select>
     <input name="month" type="number" min="1" max="12" value="@ViewBag.Month" placeholder="Mês" />
     <input name="year" type="number" min="2020" max="2100" value="@ViewBag.Year" placeholder="Ano" />
