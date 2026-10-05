@@ -1,47 +1,50 @@
 @model PersonalTransaction
 @{
     ViewData["Title"] = "Novo lançamento";
+    var sources = ViewBag.Sources as List<string> ?? [];
 }
 <div class="form-shell">
     <div class="form-heading">
         <span class="eyebrow">Módulo Pessoal</span>
         <h2>Registrar movimentação</h2>
-        <p>Cadastre receita ou despesa. Parcelamentos geram as parcelas automaticamente.</p>
+        <p>À vista, parcelado ou recorrente. O SchiMoney cria as ocorrências automaticamente quando você informar a quantidade.</p>
     </div>
 
     <form method="post" class="smart-form">
         <div asp-validation-summary="ModelOnly" class="validation"></div>
-
         <div class="segmented">
             <label><input type="radio" asp-for="Type" value="Despesa"><span>Despesa</span></label>
             <label><input type="radio" asp-for="Type" value="Receita"><span>Receita</span></label>
         </div>
 
         <div class="field-grid two">
-            <label><span>Descrição</span><input asp-for="Description" placeholder="Ex.: Internet, salário, supermercado" /></label>
-            <label><span>Valor total</span><input asp-for="Amount" type="number" step="0.01" placeholder="0,00" /></label>
+            <label><span>Descrição</span><input asp-for="Description" required placeholder="Ex.: Internet, salário, supermercado" /></label>
+            <label><span>Valor</span><input asp-for="Amount" required type="number" step="0.01" min="0.01" placeholder="0,00" /></label>
         </div>
 
         <div class="field-grid two">
             <label><span>Categoria</span>
                 <select asp-for="Category">
-                    <option>Moradia</option><option>Alimentação</option><option>Transporte</option><option>Saúde</option><option>Educação</option><option>Lazer</option><option>Assinaturas</option><option>Salário</option><option>Investimentos</option><option>Outros</option>
+                    <option>Moradia</option><option>Alimentação</option><option>Transporte</option><option>Saúde</option><option>Educação</option><option>Lazer</option><option>Assinaturas</option><option>Salário</option><option>Renda extra</option><option>Investimentos</option><option>Impostos</option><option>Outros</option>
                 </select>
             </label>
             <label><span>Subcategoria</span><input asp-for="Subcategory" placeholder="Opcional" /></label>
         </div>
 
         <div class="field-grid three">
-            <label><span>Data</span><input asp-for="Date" type="date" /></label>
+            <label><span>Data / competência</span><input asp-for="Date" type="date" /></label>
             <label><span>Vencimento</span><input asp-for="DueDate" type="date" /></label>
             <label><span>Status</span><select asp-for="Status"><option>Pago</option><option>Pendente</option><option>Vencido</option></select></label>
         </div>
 
         <div class="field-grid two">
             <label><span>Forma de pagamento</span>
-                <select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Transferência</option></select>
+                <select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Transferência</option><option>Débito automático</option></select>
             </label>
-            <label><span>Conta / cartão</span><input asp-for="AccountName" placeholder="Ex.: Nubank, Itaú, Dinheiro" /></label>
+            <label><span>Conta / cartão</span>
+                <input asp-for="AccountName" list="financial-sources" placeholder="Ex.: Nubank, Itaú, Dinheiro" />
+                <datalist id="financial-sources">@foreach(var source in sources){<option value="@source"></option>}</datalist>
+            </label>
         </div>
 
         <div class="field-grid two">
@@ -49,10 +52,10 @@
                 <select asp-for="RecurrenceType" data-recurrence>
                     <option value="Avulso">À vista / avulso</option>
                     <option value="Parcelado">Parcelado</option>
-                    <option value="Recorrente">Recorrente</option>
+                    <option value="Recorrente">Recorrente mensal</option>
                 </select>
             </label>
-            <label data-installments hidden><span>Número de parcelas</span><input asp-for="InstallmentTotal" type="number" min="2" max="120" placeholder="Ex.: 10" /></label>
+            <label data-installments hidden><span data-installment-label>Quantidade de parcelas</span><input asp-for="InstallmentTotal" type="number" min="2" max="120" placeholder="Ex.: 10" /></label>
         </div>
 
         <label><span>Observações</span><textarea asp-for="Notes" rows="3" placeholder="Opcional"></textarea></label>
