@@ -60,6 +60,41 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health", async (AppDbContext db) =>
+{
+    try
+    {
+        if (!await db.Database.CanConnectAsync())
+            return Results.Json(new { status = "unhealthy", database = "unreachable" }, statusCode: 503);
+
+        await db.PersonalTransactions.AsNoTracking().AnyAsync();
+        await db.PersonalAccounts.AsNoTracking().AnyAsync();
+        await db.PersonalCreditCards.AsNoTracking().AnyAsync();
+        await db.BarbershopSales.AsNoTracking().AnyAsync();
+        await db.BarbershopExpenses.AsNoTracking().AnyAsync();
+        await db.BarbershopServices.AsNoTracking().AnyAsync();
+        await db.FinancialGoals.AsNoTracking().AnyAsync();
+
+        return Results.Ok(new
+        {
+            status = "healthy",
+            application = "SchiMoney",
+            database = "connected",
+            schema = "ready",
+            utc = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new
+        {
+            status = "unhealthy",
+            database = "error",
+            message = ex.GetType().Name
+        }, statusCode: 503);
+    }
+});
+
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
