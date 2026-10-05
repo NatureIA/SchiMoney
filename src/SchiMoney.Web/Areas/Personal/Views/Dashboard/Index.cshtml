@@ -1,0 +1,64 @@
+@model PersonalDashboardViewModel
+@{
+    ViewData["Title"] = "Visão geral";
+}
+<div class="page-actions">
+    <div><p class="page-intro">Resumo do mês atual, sem misturar dados da Barbearia.</p></div>
+    <a class="primary-btn" asp-area="Personal" asp-controller="Transactions" asp-action="Create">+ Novo lançamento</a>
+</div>
+
+<div class="metric-grid">
+    <div class="metric-card hero-metric"><span>Resultado do mês</span><strong class="@(Model.Balance < 0 ? "negative" : "")">@Model.Balance.ToString("C")</strong><small>@Model.SavingsRate.ToString("N1")% da renda preservada</small></div>
+    <div class="metric-card"><span>Receitas</span><strong>@Model.Income.ToString("C")</strong><small>Confirmadas no mês</small></div>
+    <div class="metric-card"><span>Despesas</span><strong>@Model.Expenses.ToString("C")</strong><small>Pagas no mês</small></div>
+    <div class="metric-card"><span>A pagar</span><strong>@Model.Pending.ToString("C")</strong><small>Compromissos pendentes</small></div>
+</div>
+
+<div class="insight-card">
+    <span class="insight-badge">SchiMoney Insight</span>
+    <p>@Model.Insight</p>
+</div>
+
+<div class="dashboard-grid">
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Movimentações</span><h2>Últimos lançamentos</h2></div><a asp-area="Personal" asp-controller="Transactions" asp-action="Index">Ver todos</a></div>
+        @if (Model.Recent.Count == 0)
+        {
+            <div class="empty-mini">Nenhum lançamento ainda.</div>
+        }
+        else
+        {
+            <div class="transaction-list">
+            @foreach (var item in Model.Recent)
+            {
+                <div class="transaction-row">
+                    <div class="transaction-icon @(item.Type == "Receita" ? "income" : "expense")">@(item.Type == "Receita" ? "↑" : "↓")</div>
+                    <div class="transaction-main"><strong>@item.Description</strong><span>@item.Category · @item.Date.ToString("dd MMM")</span></div>
+                    <div class="transaction-value @(item.Type == "Receita" ? "positive" : "")">@((item.Type == "Receita" ? "+" : "-")) @item.Amount.ToString("C")</div>
+                </div>
+            }
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Composição</span><h2>Despesas por categoria</h2></div></div>
+        @if (Model.Categories.Count == 0)
+        {
+            <div class="empty-mini">As categorias aparecem conforme você registra despesas.</div>
+        }
+        else
+        {
+            <div class="category-list">
+            @foreach (var category in Model.Categories)
+            {
+                var pct = Model.Expenses == 0 ? 0 : category.Amount / Model.Expenses * 100;
+                <div class="category-item">
+                    <div><strong>@category.Name</strong><span>@category.Amount.ToString("C")</span></div>
+                    <div class="progress"><i style="width:@Math.Min(100, pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div>
+                </div>
+            }
+            </div>
+        }
+    </section>
+</div>
