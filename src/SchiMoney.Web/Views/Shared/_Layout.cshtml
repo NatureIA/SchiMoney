@@ -1,5 +1,6 @@
 @{
     var area = ViewContext.RouteData.Values["area"]?.ToString();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var isPersonal = area == "Personal";
     var isBarbershop = area == "Barbershop";
     var title = ViewData["Title"]?.ToString() ?? "SchiMoney";
@@ -31,22 +32,35 @@
             <nav class="nav">
                 @if (isPersonal)
                 {
-                    <a asp-area="Personal" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
-                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Index">Lançamentos</a>
-                    <a asp-area="Personal" asp-controller="Accounts" asp-action="Index">Contas e cartões</a>
-                    <a asp-area="Personal" asp-controller="Goals" asp-action="Index">Metas</a>
-                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Receita">Nova receita</a>
-                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Despesa">Nova despesa</a>
+                    <a class="@(controller=="Dashboard" ? "active" : "")" asp-area="Personal" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
+                    <a class="@(controller=="Transactions" ? "active" : "")" asp-area="Personal" asp-controller="Transactions" asp-action="Index">Lançamentos</a>
+                    <a class="@(controller=="Accounts" ? "active" : "")" asp-area="Personal" asp-controller="Accounts" asp-action="Index">Contas e cartões</a>
+                    <a class="@(controller=="Goals" ? "active" : "")" asp-area="Personal" asp-controller="Goals" asp-action="Index">Metas</a>
+                    <a class="@(controller=="Reports" ? "active" : "")" asp-area="Personal" asp-controller="Reports" asp-action="Index">Relatórios</a>
                 }
                 else if (isBarbershop)
                 {
-                    <a asp-area="Barbershop" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
-                    <a asp-area="Barbershop" asp-controller="Sales" asp-action="Index">Faturamento</a>
-                    <a asp-area="Barbershop" asp-controller="Expenses" asp-action="Index">Despesas</a>
-                    <a asp-area="Barbershop" asp-controller="Services" asp-action="Index">Serviços</a>
-                    <a asp-area="Barbershop" asp-controller="Goals" asp-action="Index">Metas</a>
+                    <a class="@(controller=="Dashboard" ? "active" : "")" asp-area="Barbershop" asp-controller="Dashboard" asp-action="Index">Visão geral</a>
+                    <a class="@(controller=="Sales" ? "active" : "")" asp-area="Barbershop" asp-controller="Sales" asp-action="Index">Faturamento</a>
+                    <a class="@(controller=="Expenses" ? "active" : "")" asp-area="Barbershop" asp-controller="Expenses" asp-action="Index">Despesas</a>
+                    <a class="@(controller=="Services" ? "active" : "")" asp-area="Barbershop" asp-controller="Services" asp-action="Index">Serviços</a>
+                    <a class="@(controller=="Goals" ? "active" : "")" asp-area="Barbershop" asp-controller="Goals" asp-action="Index">Metas</a>
+                    <a class="@(controller=="Reports" ? "active" : "")" asp-area="Barbershop" asp-controller="Reports" asp-action="Index">Relatórios</a>
                 }
             </nav>
+
+            <div class="sidebar-quick">
+                @if(isPersonal)
+                {
+                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Despesa">+ Nova despesa</a>
+                    <a asp-area="Personal" asp-controller="Transactions" asp-action="Create" asp-route-type="Receita">+ Nova receita</a>
+                }
+                else
+                {
+                    <a asp-area="Barbershop" asp-controller="Sales" asp-action="Create">+ Nova venda</a>
+                    <a asp-area="Barbershop" asp-controller="Expenses" asp-action="Create">+ Nova despesa</a>
+                }
+            </div>
 
             <div class="sidebar-bottom">
                 <a class="switch-module" asp-controller="Home" asp-action="Index" asp-area="">
