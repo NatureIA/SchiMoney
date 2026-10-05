@@ -43,6 +43,13 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 if (!app.Environment.IsDevelopment())
 {
+    if (string.IsNullOrWhiteSpace(app.Configuration["SCHIMONEY_ADMIN_EMAIL"]) ||
+        string.IsNullOrWhiteSpace(app.Configuration["SCHIMONEY_ADMIN_PASSWORD"]))
+    {
+        throw new InvalidOperationException(
+            "Configure SCHIMONEY_ADMIN_EMAIL e SCHIMONEY_ADMIN_PASSWORD no ambiente de produção.");
+    }
+
     app.UseExceptionHandler("/erro");
     app.UseHsts();
 }
