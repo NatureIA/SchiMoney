@@ -17,7 +17,14 @@
 <div class="insight-card business-insight">
     <span class="insight-badge">SchiMoney Insight</span>
     <p>@Model.Insight</p>
-    <strong>Projeção: @Model.ProjectedRevenue.ToString("C")</strong>
+    @if(Model.TargetRevenue > 0)
+    {
+        <strong>Meta: @Model.TargetRevenue.ToString("C")</strong>
+    }
+    else
+    {
+        <strong>Projeção: @Model.ProjectedRevenue.ToString("C")</strong>
+    }
 </div>
 
 <div class="dashboard-grid">
