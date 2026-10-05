@@ -1,0 +1,43 @@
+name: Build, publish and deploy SchiMoney
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
+  SERVER_COMPUTER_NAME: ${{ secrets.SERVER_COMPUTER_NAME }}
+  SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+  SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+
+jobs:
+  build_and_deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore src/SchiMoney.Web/SchiMoney.Web.csproj
+
+      - name: Build
+        run: dotnet build src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false --no-build
+
+      - name: Deploy to MonsterASP
+        if: ${{ env.SERVER_PASSWORD != '' }}
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        with:
+          website-name: ${{ env.WEBSITE_NAME }}
+          server-computer-name: ${{ env.SERVER_COMPUTER_NAME }}
+          server-username: ${{ env.SERVER_USERNAME }}
+          server-password: ${{ env.SERVER_PASSWORD }}
