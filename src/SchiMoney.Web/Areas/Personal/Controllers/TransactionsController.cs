@@ -39,14 +39,21 @@ public class TransactionsController(AppDbContext db) : Controller
     }
 
     [HttpGet]
-    public IActionResult Create(string type = "Despesa") =>
-        View(new PersonalTransaction { Type = type, Date = DateTime.Today, Status = "Pago", RecurrenceType = "Avulso" });
+    public async Task<IActionResult> Create(string type = "Despesa")
+    {
+        await LoadSources();
+        return View(new PersonalTransaction { Type = type, Date = DateTime.Today, Status = "Pago", RecurrenceType = "Avulso" });
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PersonalTransaction model)
     {
         ModelState.Remove(nameof(model.UserId));
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            await LoadSources();
+            return View(model);
+        }
 
         model.UserId = UserId;
         if (model.Status == "Pago" && model.PaidAt is null) model.PaidAt = model.Date;
@@ -104,7 +111,9 @@ public class TransactionsController(AppDbContext db) : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var item = await db.PersonalTransactions.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
-        return item is null ? NotFound() : View(item);
+        if (item is null) return NotFound();
+        await LoadSources();
+        return View(item);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -114,7 +123,11 @@ public class TransactionsController(AppDbContext db) : Controller
         if (item is null) return NotFound();
 
         ModelState.Remove(nameof(model.UserId));
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            await LoadSources();
+            return View(model);
+        }
 
         item.Type = model.Type;
         item.Description = model.Description;
@@ -159,6 +172,21 @@ public class TransactionsController(AppDbContext db) : Controller
             await db.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task LoadSources()
+    {
+        var accounts = await db.PersonalAccounts.AsNoTracking()
+            .Where(x => x.UserId == UserId && x.Active)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        var cards = await db.PersonalCreditCards.AsNoTracking()
+            .Where(x => x.UserId == UserId && x.Active)
+            .Select(x => x.Name)
+            .ToListAsync();
+
+        ViewBag.Sources = accounts.Concat(cards).Distinct().OrderBy(x => x).ToList();
     }
 
     private PersonalTransaction CloneForOccurrence(
