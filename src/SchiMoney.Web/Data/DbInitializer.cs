@@ -10,7 +10,9 @@ public static class DbInitializer
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
         await db.Database.EnsureCreatedAsync();
+        await SchemaBootstrapper.EnsureAsync(db);
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var email = configuration["SCHIMONEY_ADMIN_EMAIL"] ?? "admin@schimoney.local";
@@ -31,16 +33,16 @@ public static class DbInitializer
             if (!result.Succeeded)
                 throw new InvalidOperationException("Não foi possível criar o usuário administrador: " +
                     string.Join("; ", result.Errors.Select(e => e.Description)));
+        }
 
-            if (!await db.BarbershopServices.AnyAsync(x => x.UserId == user.Id))
-            {
-                db.BarbershopServices.AddRange(
-                    new BarbershopService { UserId = user.Id, Name = "Corte", Price = 45 },
-                    new BarbershopService { UserId = user.Id, Name = "Barba", Price = 30 },
-                    new BarbershopService { UserId = user.Id, Name = "Corte + Barba", Price = 65 }
-                );
-                await db.SaveChangesAsync();
-            }
+        if (!await db.BarbershopServices.AnyAsync(x => x.UserId == user.Id))
+        {
+            db.BarbershopServices.AddRange(
+                new BarbershopService { UserId = user.Id, Name = "Corte", Price = 45 },
+                new BarbershopService { UserId = user.Id, Name = "Barba", Price = 30 },
+                new BarbershopService { UserId = user.Id, Name = "Corte + Barba", Price = 65 }
+            );
+            await db.SaveChangesAsync();
         }
     }
 }
