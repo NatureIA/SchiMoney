@@ -1,0 +1,34 @@
+@model PersonalReportViewModel
+@{
+    ViewData["Title"] = "Relatórios";
+    var max = Model.Months.SelectMany(x => new[] { x.Income, x.Expense }).DefaultIfEmpty(1).Max();
+    if(max <= 0) max = 1;
+}
+<div class="period-toolbar compact-period">
+    <a class="period-arrow" asp-action="Index" asp-route-year="@(Model.Year-1)">←</a>
+    <div><span class="eyebrow">Ano</span><strong>@Model.Year</strong></div>
+    <a class="period-arrow" asp-action="Index" asp-route-year="@(Model.Year+1)">→</a>
+</div>
+<div class="metric-grid three-metrics">
+    <div class="metric-card"><span>Receitas no ano</span><strong>@Model.Income.ToString("C")</strong><small>Movimentações pagas</small></div>
+    <div class="metric-card"><span>Despesas no ano</span><strong>@Model.Expenses.ToString("C")</strong><small>Movimentações pagas</small></div>
+    <div class="metric-card hero-metric"><span>Resultado anual</span><strong class="@(Model.Result<0 ? "negative" : "")">@Model.Result.ToString("C")</strong><small>Receitas menos despesas</small></div>
+</div>
+<div class="dashboard-grid secondary-grid">
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Mês a mês</span><h2>Fluxo anual</h2></div></div>
+<div class="trend-chart report-chart">
+@foreach(var p in Model.Months){
+var ih=p.Income/max*100; var eh=p.Expense/max*100;
+<div class="trend-column"><div class="trend-bars"><i class="income-bar" style="height:@ih.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i><i class="expense-bar" style="height:@eh.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div><span>@p.Label</span></div>
+}
+</div>
+<div class="chart-legend"><span><i class="legend-dot income-dot"></i>Receitas</span><span><i class="legend-dot expense-dot"></i>Despesas</span></div>
+</section>
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Concentração</span><h2>Gastos por categoria</h2></div></div>
+@if(Model.Categories.Count==0){<div class="empty-mini">Sem despesas no período.</div>}else{
+<div class="category-list">@foreach(var c in Model.Categories.Take(10)){var pct=Model.Expenses==0?0:c.Amount/Model.Expenses*100;<div class="category-item"><div><strong>@c.Name</strong><span>@c.Amount.ToString("C") · @pct.ToString("N1")%</span></div><div class="progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div>
+}
+</section>
+</div>
