@@ -1,0 +1,25 @@
+@model List<BarbershopSale>
+@{
+    ViewData["Title"] = "Faturamento";
+}
+<div class="page-actions">
+    <p class="page-intro">Histórico de vendas do módulo Barbearia.</p>
+    <a class="primary-btn" asp-action="Create">+ Registrar venda</a>
+</div>
+<div class="table-card">
+<table class="data-table">
+<thead><tr><th>Data</th><th>Serviço</th><th>Cliente</th><th>Pagamento</th><th class="right">Valor</th><th></th></tr></thead>
+<tbody>
+@if(Model.Count == 0){<tr><td colspan="6" class="empty-cell">Nenhuma venda registrada.</td></tr>}
+@foreach(var item in Model){
+<tr>
+<td>@item.Date.ToString("dd/MM/yyyy")</td>
+<td><strong>@item.ServiceName</strong></td>
+<td>@(string.IsNullOrWhiteSpace(item.CustomerName) ? "—" : item.CustomerName)</td>
+<td>@item.PaymentMethod</td>
+<td class="right positive">+ @item.Amount.ToString("C")</td>
+<td class="right"><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta venda?')"><button class="icon-btn" type="submit">×</button></form></td>
+</tr>}
+</tbody>
+</table>
+</div>
