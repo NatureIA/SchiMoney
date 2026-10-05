@@ -1,0 +1,31 @@
+@model BarbershopReportViewModel
+@{
+    ViewData["Title"] = "Relatórios";
+    var max = Model.Months.SelectMany(x=>new[]{x.Income,x.Expense}).DefaultIfEmpty(1).Max();
+    if(max<=0) max=1;
+}
+<div class="period-toolbar compact-period"><a class="period-arrow" asp-action="Index" asp-route-year="@(Model.Year-1)">←</a><div><span class="eyebrow">Ano</span><strong>@Model.Year</strong></div><a class="period-arrow" asp-action="Index" asp-route-year="@(Model.Year+1)">→</a></div>
+
+<div class="metric-grid">
+<div class="metric-card"><span>Faturamento anual</span><strong>@Model.Revenue.ToString("C")</strong><small>Vendas registradas</small></div>
+<div class="metric-card"><span>Despesas anuais</span><strong>@Model.Expenses.ToString("C")</strong><small>Despesas pagas</small></div>
+<div class="metric-card hero-metric"><span>Lucro anual</span><strong class="@(Model.Profit<0?"negative":"")">@Model.Profit.ToString("C")</strong><small>Margem @Model.Margin.ToString("N1")%</small></div>
+<div class="metric-card"><span>Serviços ativos no mix</span><strong>@Model.Services.Count</strong><small>Serviços com faturamento no ano</small></div>
+</div>
+
+<div class="dashboard-grid secondary-grid">
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Mês a mês</span><h2>Faturamento x despesas</h2></div></div>
+<div class="trend-chart report-chart">@foreach(var p in Model.Months){var ih=p.Income/max*100;var eh=p.Expense/max*100;<div class="trend-column"><div class="trend-bars"><i class="income-bar business-bar" style="height:@ih.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i><i class="expense-bar" style="height:@eh.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div><span>@p.Label</span></div>}</div>
+<div class="chart-legend"><span><i class="legend-dot business-dot"></i>Faturamento</span><span><i class="legend-dot expense-dot"></i>Despesas</span></div>
+</section>
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Ranking</span><h2>Serviços por faturamento</h2></div></div>
+@if(Model.Services.Count==0){<div class="empty-mini">Sem vendas no período.</div>}else{<div class="category-list">@foreach(var s in Model.Services.Take(10)){var pct=Model.Revenue==0?0:s.Amount/Model.Revenue*100;<div class="category-item"><div><strong>@s.Name</strong><span>@s.Amount.ToString("C") · @pct.ToString("N1")%</span></div><div class="progress business-progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div>}
+</section>
+</div>
+
+<div class="dashboard-grid secondary-grid">
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">Custos</span><h2>Despesas por categoria</h2></div></div>@if(Model.ExpensesByCategory.Count==0){<div class="empty-mini">Sem despesas pagas no período.</div>}else{<div class="category-list">@foreach(var c in Model.ExpensesByCategory.Take(10)){var pct=Model.Expenses==0?0:c.Amount/Model.Expenses*100;<div class="category-item"><div><strong>@c.Name</strong><span>@c.Amount.ToString("C")</span></div><div class="progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div>}</section>
+<section class="panel"><div class="panel-head"><div><span class="eyebrow">Recebimentos</span><h2>Formas de pagamento</h2></div></div>@if(Model.PaymentMethods.Count==0){<div class="empty-mini">Sem vendas no período.</div>}else{<div class="category-list">@foreach(var p in Model.PaymentMethods){var pct=Model.Revenue==0?0:p.Amount/Model.Revenue*100;<div class="category-item"><div><strong>@p.Name</strong><span>@p.Amount.ToString("C") · @pct.ToString("N1")%</span></div><div class="progress business-progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div>}</section>
+</div>
