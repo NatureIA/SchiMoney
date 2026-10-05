@@ -31,6 +31,31 @@ public class PersonalTransaction
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+public class PersonalAccount
+{
+    public int Id { get; set; }
+    [Required] public string UserId { get; set; } = string.Empty;
+    [Required, MaxLength(100)] public string Name { get; set; } = string.Empty;
+    [Required, MaxLength(40)] public string Type { get; set; } = "Conta digital";
+    [MaxLength(100)] public string? Institution { get; set; }
+    public decimal InitialBalance { get; set; }
+    public bool Active { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class PersonalCreditCard
+{
+    public int Id { get; set; }
+    [Required] public string UserId { get; set; } = string.Empty;
+    [Required, MaxLength(100)] public string Name { get; set; } = string.Empty;
+    [MaxLength(100)] public string? Institution { get; set; }
+    public decimal Limit { get; set; }
+    [Range(1,31)] public int ClosingDay { get; set; } = 1;
+    [Range(1,31)] public int DueDay { get; set; } = 10;
+    public bool Active { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class BarbershopSale
 {
     public int Id { get; set; }
