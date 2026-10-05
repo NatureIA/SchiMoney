@@ -1,12 +1,11 @@
-name: Build, publish and deploy SchiMoney
+name: Automatic SchiMoney deploy
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 concurrency:
-  group: schimoney-main
+  group: schimoney-production
   cancel-in-progress: true
 
 env:
@@ -16,10 +15,18 @@ env:
   SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
 
 jobs:
-  build_and_deploy:
+  build_test_deploy_verify:
     runs-on: windows-latest
 
     steps:
+      - name: Validate deployment configuration
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.WEBSITE_NAME }}")) { throw "WEBSITE_NAME não configurado." }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.SERVER_COMPUTER_NAME }}")) { throw "SERVER_COMPUTER_NAME não configurado." }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.SERVER_USERNAME }}")) { throw "SERVER_USERNAME não configurado." }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.SERVER_PASSWORD }}")) { throw "SERVER_PASSWORD não configurado." }
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -38,10 +45,36 @@ jobs:
         run: dotnet publish src/SchiMoney.Web/SchiMoney.Web.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false
 
       - name: Deploy to MonsterASP
-        if: ${{ env.SERVER_PASSWORD != '' }}
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ env.WEBSITE_NAME }}
           server-computer-name: ${{ env.SERVER_COMPUTER_NAME }}
           server-username: ${{ env.SERVER_USERNAME }}
           server-password: ${{ env.SERVER_PASSWORD }}
+
+      - name: Verify application and database automatically
+        shell: pwsh
+        run: |
+          $healthUrl = "https://$env:WEBSITE_NAME.siteasp.net/health"
+          $maxAttempts = 24
+
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              Write-Host "Health check $attempt/$maxAttempts -> $healthUrl"
+              $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 20
+              if ($response.StatusCode -eq 200) {
+                $body = $response.Content | ConvertFrom-Json
+                if ($body.status -eq "healthy" -and $body.database -eq "connected" -and $body.schema -eq "ready") {
+                  Write-Host "SchiMoney publicado e banco validado."
+                  exit 0
+                }
+              }
+            }
+            catch {
+              Write-Host "Aplicação ainda inicializando: $($_.Exception.Message)"
+            }
+
+            Start-Sleep -Seconds 10
+          }
+
+          throw "Deploy concluído, mas a verificação automática do SchiMoney/banco não ficou saudável."
