@@ -1,25 +1,81 @@
 @model PersonalDashboardViewModel
 @{
     ViewData["Title"] = "Visão geral";
+    var previous = Model.Month.AddMonths(-1);
+    var next = Model.Month.AddMonths(1);
+    var trendMax = Model.Trend.SelectMany(x => new[] { x.Income, x.Expense }).DefaultIfEmpty(1).Max();
+    if (trendMax <= 0) trendMax = 1;
 }
-<div class="page-actions">
-    <div><p class="page-intro">Resumo do mês atual, sem misturar dados da Barbearia.</p></div>
-    <a class="primary-btn" asp-area="Personal" asp-controller="Transactions" asp-action="Create">+ Novo lançamento</a>
+<div class="period-toolbar">
+    <a class="period-arrow" asp-action="Index" asp-route-year="@previous.Year" asp-route-month="@previous.Month">←</a>
+    <div><span class="eyebrow">Período</span><strong>@Model.Month.ToString("MMMM yyyy")</strong></div>
+    <a class="period-arrow" asp-action="Index" asp-route-year="@next.Year" asp-route-month="@next.Month">→</a>
+    <a class="primary-btn period-cta" asp-area="Personal" asp-controller="Transactions" asp-action="Create">+ Novo lançamento</a>
 </div>
 
 <div class="metric-grid">
-    <div class="metric-card hero-metric"><span>Resultado do mês</span><strong class="@(Model.Balance < 0 ? "negative" : "")">@Model.Balance.ToString("C")</strong><small>@Model.SavingsRate.ToString("N1")% da renda preservada</small></div>
-    <div class="metric-card"><span>Receitas</span><strong>@Model.Income.ToString("C")</strong><small>Confirmadas no mês</small></div>
-    <div class="metric-card"><span>Despesas</span><strong>@Model.Expenses.ToString("C")</strong><small>Pagas no mês</small></div>
-    <div class="metric-card"><span>A pagar</span><strong>@Model.Pending.ToString("C")</strong><small>Compromissos pendentes</small></div>
+    <div class="metric-card hero-metric">
+        <span>Resultado do mês</span>
+        <strong class="@(Model.Balance < 0 ? "negative" : "")">@Model.Balance.ToString("C")</strong>
+        <small>@Model.SavingsRate.ToString("N1")% da renda preservada</small>
+    </div>
+    <div class="metric-card"><span>Receitas</span><strong>@Model.Income.ToString("C")</strong><small>Recebidas no período</small></div>
+    <div class="metric-card"><span>Despesas</span><strong>@Model.Expenses.ToString("C")</strong><small>Pagas no período</small></div>
+    <div class="metric-card"><span>Saldo em contas</span><strong>@Model.AccountBalance.ToString("C")</strong><small>Saldo estimado das contas cadastradas</small></div>
 </div>
 
 <div class="insight-card">
     <span class="insight-badge">SchiMoney Insight</span>
     <p>@Model.Insight</p>
+    @if(Model.Pending > 0){<strong>@Model.Pending.ToString("C") pendentes</strong>}
 </div>
 
 <div class="dashboard-grid">
+    <section class="panel">
+        <div class="panel-head">
+            <div><span class="eyebrow">Evolução</span><h2>Últimos 6 meses</h2></div>
+            <a asp-area="Personal" asp-controller="Reports" asp-action="Index">Relatório anual</a>
+        </div>
+        <div class="trend-chart">
+        @foreach(var point in Model.Trend)
+        {
+            var incomeH = point.Income / trendMax * 100;
+            var expenseH = point.Expense / trendMax * 100;
+            <div class="trend-column">
+                <div class="trend-bars">
+                    <i class="income-bar" style="height:@incomeH.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i>
+                    <i class="expense-bar" style="height:@expenseH.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i>
+                </div>
+                <span>@point.Label</span>
+            </div>
+        }
+        </div>
+        <div class="chart-legend"><span><i class="legend-dot income-dot"></i>Receitas</span><span><i class="legend-dot expense-dot"></i>Despesas</span></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Composição</span><h2>Despesas por categoria</h2></div></div>
+        @if (Model.Categories.Count == 0)
+        {
+            <div class="empty-mini">As categorias aparecerão conforme você registrar despesas.</div>
+        }
+        else
+        {
+            <div class="category-list">
+            @foreach (var category in Model.Categories)
+            {
+                var pct = Model.Expenses == 0 ? 0 : category.Amount / Model.Expenses * 100;
+                <div class="category-item">
+                    <div><strong>@category.Name</strong><span>@category.Amount.ToString("C")</span></div>
+                    <div class="progress"><i style="width:@Math.Min(100, pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div>
+                </div>
+            }
+            </div>
+        }
+    </section>
+</div>
+
+<div class="dashboard-grid secondary-grid">
     <section class="panel">
         <div class="panel-head"><div><span class="eyebrow">Movimentações</span><h2>Últimos lançamentos</h2></div><a asp-area="Personal" asp-controller="Transactions" asp-action="Index">Ver todos</a></div>
         @if (Model.Recent.Count == 0)
@@ -31,31 +87,31 @@
             <div class="transaction-list">
             @foreach (var item in Model.Recent)
             {
-                <div class="transaction-row">
+                <a class="transaction-row" asp-area="Personal" asp-controller="Transactions" asp-action="Edit" asp-route-id="@item.Id">
                     <div class="transaction-icon @(item.Type == "Receita" ? "income" : "expense")">@(item.Type == "Receita" ? "↑" : "↓")</div>
-                    <div class="transaction-main"><strong>@item.Description</strong><span>@item.Category · @item.Date.ToString("dd MMM")</span></div>
+                    <div class="transaction-main"><strong>@item.Description</strong><span>@item.Category · @item.Date.ToString("dd MMM") · @item.Status</span></div>
                     <div class="transaction-value @(item.Type == "Receita" ? "positive" : "")">@((item.Type == "Receita" ? "+" : "-")) @item.Amount.ToString("C")</div>
-                </div>
+                </a>
             }
             </div>
         }
     </section>
 
     <section class="panel">
-        <div class="panel-head"><div><span class="eyebrow">Composição</span><h2>Despesas por categoria</h2></div></div>
-        @if (Model.Categories.Count == 0)
+        <div class="panel-head"><div><span class="eyebrow">Próximos 30 dias</span><h2>Contas a vencer</h2></div></div>
+        @if(Model.Upcoming.Count == 0)
         {
-            <div class="empty-mini">As categorias aparecem conforme você registra despesas.</div>
+            <div class="empty-mini">Nenhuma conta pendente com vencimento nos próximos 30 dias.</div>
         }
         else
         {
-            <div class="category-list">
-            @foreach (var category in Model.Categories)
+            <div class="transaction-list">
+            @foreach(var item in Model.Upcoming)
             {
-                var pct = Model.Expenses == 0 ? 0 : category.Amount / Model.Expenses * 100;
-                <div class="category-item">
-                    <div><strong>@category.Name</strong><span>@category.Amount.ToString("C")</span></div>
-                    <div class="progress"><i style="width:@Math.Min(100, pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div>
+                <div class="transaction-row">
+                    <div class="date-chip"><strong>@item.DueDate?.Day</strong><span>@item.DueDate?.ToString("MMM")</span></div>
+                    <div class="transaction-main"><strong>@item.Description</strong><span>@item.Category · @item.PaymentMethod</span></div>
+                    <div class="transaction-value">@item.Amount.ToString("C")</div>
                 </div>
             }
             </div>
