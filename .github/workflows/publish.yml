@@ -75,7 +75,7 @@ jobs:
                 }
               }
               catch {
-                Write-Host "Aplicação ainda inicializando em $healthUrl: $($_.Exception.Message)"
+                Write-Host "Aplicação ainda inicializando em ${healthUrl}: $($_.Exception.Message)"
               }
             }
 
