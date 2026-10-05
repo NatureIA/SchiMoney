@@ -25,6 +25,13 @@ public class PersonalDashboardViewModel
     public string Insight { get; set; } = string.Empty;
 }
 
+public class PersonalAccountsViewModel
+{
+    public List<PersonalAccount> Accounts { get; set; } = [];
+    public List<PersonalCreditCard> Cards { get; set; } = [];
+    public Dictionary<int, decimal> Balances { get; set; } = [];
+}
+
 public class BarbershopDashboardViewModel
 {
     public decimal Revenue { get; set; }
@@ -34,6 +41,9 @@ public class BarbershopDashboardViewModel
     public int SalesCount { get; set; }
     public decimal AverageTicket => SalesCount == 0 ? 0 : Revenue / SalesCount;
     public decimal ProjectedRevenue { get; set; }
+    public decimal TargetRevenue { get; set; }
+    public decimal RemainingToTarget => Math.Max(0, TargetRevenue - Revenue);
+    public decimal DailyNeeded { get; set; }
     public List<BarbershopSale> RecentSales { get; set; } = [];
     public List<CategoryTotal> ExpenseCategories { get; set; } = [];
     public string Insight { get; set; } = string.Empty;
