@@ -2,24 +2,25 @@
 @{
     ViewData["Title"] = "Faturamento";
 }
-<div class="page-actions">
-    <p class="page-intro">Histórico de vendas do módulo Barbearia.</p>
-    <a class="primary-btn" asp-action="Create">+ Registrar venda</a>
-</div>
+<div class="page-actions"><p class="page-intro">Vendas e faturamento do módulo Barbearia.</p><a class="primary-btn" asp-action="Create">+ Registrar venda</a></div>
+
+<form method="get" class="filter-panel">
+<input name="q" value="@ViewBag.Q" placeholder="Buscar serviço ou cliente..." />
+<select name="payment"><option value="">Todas as formas</option><option value="Pix" selected="@(ViewBag.Payment=="Pix")">Pix</option><option value="Dinheiro" selected="@(ViewBag.Payment=="Dinheiro")">Dinheiro</option><option value="Débito" selected="@(ViewBag.Payment=="Débito")">Débito</option><option value="Crédito" selected="@(ViewBag.Payment=="Crédito")">Crédito</option><option value="Transferência" selected="@(ViewBag.Payment=="Transferência")">Transferência</option></select>
+<input name="month" type="number" min="1" max="12" value="@ViewBag.Month" placeholder="Mês" />
+<input name="year" type="number" min="2020" max="2100" value="@ViewBag.Year" placeholder="Ano" />
+<button class="secondary-btn" type="submit">Filtrar</button><a class="filter-clear" asp-action="Index">Limpar</a>
+</form>
+
 <div class="table-card">
 <table class="data-table">
-<thead><tr><th>Data</th><th>Serviço</th><th>Cliente</th><th>Pagamento</th><th class="right">Valor</th><th></th></tr></thead>
+<thead><tr><th>Data</th><th>Serviço</th><th>Cliente</th><th>Pagamento</th><th class="right">Valor</th><th class="right">Ações</th></tr></thead>
 <tbody>
-@if(Model.Count == 0){<tr><td colspan="6" class="empty-cell">Nenhuma venda registrada.</td></tr>}
+@if(Model.Count==0){<tr><td colspan="6" class="empty-cell">Nenhuma venda encontrada.</td></tr>}
 @foreach(var item in Model){
 <tr>
-<td>@item.Date.ToString("dd/MM/yyyy")</td>
-<td><strong>@item.ServiceName</strong></td>
-<td>@(string.IsNullOrWhiteSpace(item.CustomerName) ? "—" : item.CustomerName)</td>
-<td>@item.PaymentMethod</td>
+<td>@item.Date.ToString("dd/MM/yyyy")</td><td><strong>@item.ServiceName</strong></td><td>@(string.IsNullOrWhiteSpace(item.CustomerName)?"—":item.CustomerName)</td><td>@item.PaymentMethod</td>
 <td class="right positive">+ @item.Amount.ToString("C")</td>
-<td class="right"><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta venda?')"><button class="icon-btn" type="submit">×</button></form></td>
+<td class="right actions-cell"><a class="mini-action" asp-action="Edit" asp-route-id="@item.Id">Editar</a><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta venda?')"><button class="icon-btn" type="submit">×</button></form></td>
 </tr>}
-</tbody>
-</table>
-</div>
+</tbody></table></div>
