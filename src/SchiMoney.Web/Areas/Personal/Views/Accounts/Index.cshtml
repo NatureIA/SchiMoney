@@ -1,0 +1,82 @@
+@model PersonalAccountsViewModel
+@{
+    ViewData["Title"] = "Contas e cartões";
+}
+<div class="page-actions">
+    <p class="page-intro">Cadastre onde seu dinheiro fica e os cartões usados no módulo Pessoal.</p>
+</div>
+
+<div class="dashboard-grid">
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Contas</span><h2>Contas financeiras</h2></div></div>
+        @if(Model.Accounts.Count == 0)
+        {
+            <div class="empty-mini">Nenhuma conta cadastrada.</div>
+        }
+        else
+        {
+            <div class="service-list">
+            @foreach(var a in Model.Accounts)
+            {
+                <div class="service-row">
+                    <div>
+                        <strong>@a.Name</strong>
+                        <span>@a.Type · @(a.Institution ?? "Sem instituição") · saldo estimado @Model.Balances.GetValueOrDefault(a.Id).ToString("C")</span>
+                    </div>
+                    <form asp-action="DeleteAccount" asp-route-id="@a.Id" method="post"><button class="icon-btn" type="submit">×</button></form>
+                </div>
+            }
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Nova conta</span><h2>Adicionar conta</h2></div></div>
+        <form asp-action="CreateAccount" method="post" class="smart-form compact">
+            <label><span>Nome</span><input name="name" required placeholder="Ex.: Nubank" /></label>
+            <label><span>Tipo</span><select name="type"><option>Conta digital</option><option>Conta corrente</option><option>Poupança</option><option>Carteira</option><option>Investimento</option></select></label>
+            <label><span>Instituição</span><input name="institution" placeholder="Opcional" /></label>
+            <label><span>Saldo inicial</span><input name="initialBalance" type="number" step="0.01" value="0" /></label>
+            <button class="primary-btn" type="submit">Adicionar conta</button>
+        </form>
+    </section>
+</div>
+
+<div class="dashboard-grid" style="margin-top:18px">
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Cartões</span><h2>Cartões de crédito</h2></div></div>
+        @if(Model.Cards.Count == 0)
+        {
+            <div class="empty-mini">Nenhum cartão cadastrado.</div>
+        }
+        else
+        {
+            <div class="service-list">
+            @foreach(var c in Model.Cards)
+            {
+                <div class="service-row">
+                    <div>
+                        <strong>@c.Name</strong>
+                        <span>Limite @c.Limit.ToString("C") · fecha dia @c.ClosingDay · vence dia @c.DueDay</span>
+                    </div>
+                    <form asp-action="DeleteCard" asp-route-id="@c.Id" method="post"><button class="icon-btn" type="submit">×</button></form>
+                </div>
+            }
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><div><span class="eyebrow">Novo cartão</span><h2>Adicionar cartão</h2></div></div>
+        <form asp-action="CreateCard" method="post" class="smart-form compact">
+            <label><span>Nome</span><input name="name" required placeholder="Ex.: Nubank Ultravioleta" /></label>
+            <label><span>Instituição</span><input name="institution" placeholder="Opcional" /></label>
+            <label><span>Limite</span><input name="limit" type="number" step="0.01" min="0" required /></label>
+            <div class="field-grid two">
+                <label><span>Fechamento</span><input name="closingDay" type="number" min="1" max="31" value="1" /></label>
+                <label><span>Vencimento</span><input name="dueDay" type="number" min="1" max="31" value="10" /></label>
+            </div>
+            <button class="primary-btn" type="submit">Adicionar cartão</button>
+        </form>
+    </section>
+</div>
