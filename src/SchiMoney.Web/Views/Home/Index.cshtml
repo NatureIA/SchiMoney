@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Escolha seu ambiente";
+}
+<div class="module-screen">
+    <div class="module-top">
+        <div class="brand brand-large"><span class="brand-mark">S</span><span>SchiMoney</span></div>
+        <form asp-controller="Account" asp-action="Logout" method="post"><button class="ghost-btn" type="submit">Sair</button></form>
+    </div>
+
+    <div class="module-hero">
+        <span class="eyebrow">Seu dinheiro, com clareza.</span>
+        <h1>Qual ambiente você quer acessar?</h1>
+        <p>Pessoal e Barbearia são módulos independentes. Cada um possui seus próprios dados, regras e indicadores.</p>
+    </div>
+
+    <div class="module-grid">
+        <a class="module-card personal-card" asp-area="Personal" asp-controller="Dashboard" asp-action="Index">
+            <div class="module-card-icon">P</div>
+            <div>
+                <span class="eyebrow">Módulo</span>
+                <h2>Pessoal</h2>
+                <p>Receitas, despesas, compromissos, categorias e visão clara da sua vida financeira.</p>
+            </div>
+            <span class="card-arrow">→</span>
+        </a>
+
+        <a class="module-card business-card" asp-area="Barbershop" asp-controller="Dashboard" asp-action="Index">
+            <div class="module-card-icon">B</div>
+            <div>
+                <span class="eyebrow">Módulo</span>
+                <h2>Barbearia</h2>
+                <p>Faturamento, vendas, despesas, serviços, margem, ticket médio e resultado operacional.</p>
+            </div>
+            <span class="card-arrow">→</span>
+        </a>
+    </div>
+</div>
