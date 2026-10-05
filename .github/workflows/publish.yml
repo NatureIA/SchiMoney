@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: schimoney-main
+  cancel-in-progress: true
+
 env:
   WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
   SERVER_COMPUTER_NAME: ${{ secrets.SERVER_COMPUTER_NAME }}
