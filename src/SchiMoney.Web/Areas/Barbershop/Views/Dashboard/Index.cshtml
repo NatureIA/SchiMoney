@@ -1,10 +1,16 @@
 @model BarbershopDashboardViewModel
 @{
     ViewData["Title"] = "Visão geral";
+    var previous = Model.Month.AddMonths(-1);
+    var next = Model.Month.AddMonths(1);
+    var trendMax = Model.Trend.SelectMany(x => new[] { x.Income, x.Expense }).DefaultIfEmpty(1).Max();
+    if (trendMax <= 0) trendMax = 1;
 }
-<div class="page-actions">
-    <p class="page-intro">Performance financeira da Barbearia no mês atual.</p>
-    <a class="primary-btn" asp-area="Barbershop" asp-controller="Sales" asp-action="Create">+ Registrar venda</a>
+<div class="period-toolbar">
+    <a class="period-arrow" asp-action="Index" asp-route-year="@previous.Year" asp-route-month="@previous.Month">←</a>
+    <div><span class="eyebrow">Período</span><strong>@Model.Month.ToString("MMMM yyyy")</strong></div>
+    <a class="period-arrow" asp-action="Index" asp-route-year="@next.Year" asp-route-month="@next.Month">→</a>
+    <a class="primary-btn period-cta" asp-area="Barbershop" asp-controller="Sales" asp-action="Create">+ Registrar venda</a>
 </div>
 
 <div class="metric-grid">
@@ -17,56 +23,49 @@
 <div class="insight-card business-insight">
     <span class="insight-badge">SchiMoney Insight</span>
     <p>@Model.Insight</p>
-    @if(Model.TargetRevenue > 0)
-    {
-        <strong>Meta: @Model.TargetRevenue.ToString("C")</strong>
-    }
-    else
-    {
-        <strong>Projeção: @Model.ProjectedRevenue.ToString("C")</strong>
-    }
+    @if(Model.TargetRevenue > 0){<strong>Meta @Model.TargetRevenue.ToString("C")</strong>}else{<strong>Projeção @Model.ProjectedRevenue.ToString("C")</strong>}
 </div>
 
 <div class="dashboard-grid">
-    <section class="panel">
-        <div class="panel-head"><div><span class="eyebrow">Operação</span><h2>Vendas recentes</h2></div><a asp-area="Barbershop" asp-controller="Sales" asp-action="Index">Ver todas</a></div>
-        @if (Model.RecentSales.Count == 0)
-        {
-            <div class="empty-mini">Nenhuma venda registrada.</div>
-        }
-        else
-        {
-            <div class="transaction-list">
-            @foreach (var item in Model.RecentSales)
-            {
-                <div class="transaction-row">
-                    <div class="transaction-icon income">↑</div>
-                    <div class="transaction-main"><strong>@item.ServiceName</strong><span>@item.PaymentMethod · @item.Date.ToString("dd MMM")</span></div>
-                    <div class="transaction-value positive">+ @item.Amount.ToString("C")</div>
-                </div>
-            }
-            </div>
-        }
-    </section>
+<section class="panel">
+    <div class="panel-head"><div><span class="eyebrow">Evolução</span><h2>Faturamento x despesas</h2></div><a asp-area="Barbershop" asp-controller="Reports" asp-action="Index">Relatório anual</a></div>
+    <div class="trend-chart">
+    @foreach(var point in Model.Trend)
+    {
+        var incomeH=point.Income/trendMax*100; var expenseH=point.Expense/trendMax*100;
+        <div class="trend-column"><div class="trend-bars"><i class="income-bar business-bar" style="height:@incomeH.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i><i class="expense-bar" style="height:@expenseH.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div><span>@point.Label</span></div>
+    }
+    </div>
+    <div class="chart-legend"><span><i class="legend-dot business-dot"></i>Faturamento</span><span><i class="legend-dot expense-dot"></i>Despesas</span></div>
+</section>
 
-    <section class="panel">
-        <div class="panel-head"><div><span class="eyebrow">Custos</span><h2>Despesas por categoria</h2></div></div>
-        @if (Model.ExpenseCategories.Count == 0)
-        {
-            <div class="empty-mini">As categorias aparecem quando despesas forem cadastradas.</div>
-        }
-        else
-        {
-            <div class="category-list">
-            @foreach (var category in Model.ExpenseCategories)
-            {
-                var pct = Model.Expenses == 0 ? 0 : category.Amount / Model.Expenses * 100;
-                <div class="category-item">
-                    <div><strong>@category.Name</strong><span>@category.Amount.ToString("C")</span></div>
-                    <div class="progress"><i style="width:@Math.Min(100, pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div>
-                </div>
-            }
-            </div>
-        }
-    </section>
+<section class="panel">
+    <div class="panel-head"><div><span class="eyebrow">Mix de receita</span><h2>Serviços que mais faturam</h2></div></div>
+    @if(Model.TopServices.Count==0){<div class="empty-mini">Os serviços aparecerão conforme as vendas forem registradas.</div>}else{
+    <div class="category-list">
+    @foreach(var s in Model.TopServices)
+    {
+        var pct=Model.Revenue==0?0:s.Amount/Model.Revenue*100;
+        <div class="category-item"><div><strong>@s.Name</strong><span>@s.Amount.ToString("C") · @pct.ToString("N1")%</span></div><div class="progress business-progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>
+    }
+    </div>}
+</section>
+</div>
+
+<div class="dashboard-grid secondary-grid">
+<section class="panel">
+    <div class="panel-head"><div><span class="eyebrow">Operação</span><h2>Vendas recentes</h2></div><a asp-area="Barbershop" asp-controller="Sales" asp-action="Index">Ver todas</a></div>
+    @if(Model.RecentSales.Count==0){<div class="empty-mini">Nenhuma venda registrada.</div>}else{
+    <div class="transaction-list">@foreach(var item in Model.RecentSales){
+        <a class="transaction-row" asp-area="Barbershop" asp-controller="Sales" asp-action="Edit" asp-route-id="@item.Id">
+            <div class="transaction-icon income">↑</div><div class="transaction-main"><strong>@item.ServiceName</strong><span>@item.PaymentMethod · @item.Date.ToString("dd MMM")</span></div><div class="transaction-value positive">+ @item.Amount.ToString("C")</div>
+        </a>
+    }</div>}
+</section>
+
+<section class="panel">
+    <div class="panel-head"><div><span class="eyebrow">Custos</span><h2>Despesas por categoria</h2></div></div>
+    @if(Model.ExpenseCategories.Count==0){<div class="empty-mini">Nenhuma despesa paga no período.</div>}else{
+    <div class="category-list">@foreach(var c in Model.ExpenseCategories){var pct=Model.Expenses==0?0:c.Amount/Model.Expenses*100;<div class="category-item"><div><strong>@c.Name</strong><span>@c.Amount.ToString("C")</span></div><div class="progress"><i style="width:@Math.Min(100,pct).ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></i></div></div>}</div>}
+</section>
 </div>
