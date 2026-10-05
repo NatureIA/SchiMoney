@@ -1,0 +1,23 @@
+@model List<BarbershopService>
+@{
+    ViewData["Title"] = "Serviços";
+}
+<div class="page-actions"><p class="page-intro">Catálogo usado para acelerar o registro das vendas.</p></div>
+<div class="services-layout">
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Catálogo</span><h2>Serviços cadastrados</h2></div></div>
+<div class="service-list">
+@if(Model.Count == 0){<div class="empty-mini">Nenhum serviço cadastrado.</div>}
+@foreach(var item in Model){
+<div class="service-row"><div><strong>@item.Name</strong><span>@item.Price.ToString("C")</span></div><form asp-action="Delete" asp-route-id="@item.Id" method="post"><button class="icon-btn" type="submit">×</button></form></div>}
+</div>
+</section>
+<section class="panel">
+<div class="panel-head"><div><span class="eyebrow">Novo</span><h2>Adicionar serviço</h2></div></div>
+<form asp-action="Create" method="post" class="smart-form compact">
+<label><span>Nome</span><input name="name" required placeholder="Ex.: Corte premium" /></label>
+<label><span>Preço</span><input name="price" required type="number" step="0.01" min="0.01" /></label>
+<button class="primary-btn" type="submit">Adicionar serviço</button>
+</form>
+</section>
+</div>
