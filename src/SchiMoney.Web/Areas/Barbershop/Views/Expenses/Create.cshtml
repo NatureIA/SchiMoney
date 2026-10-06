@@ -22,8 +22,9 @@
     <input asp-for="Description" placeholder="Ex.: Aluguel, energia, produtos" required />
 </label>
 <label>
-    <span>Valor total</span>
+    <span data-expense-amount-label>Valor</span>
     <input asp-for="Amount" type="number" step="0.01" min="0.01" required />
+    <small data-expense-amount-help>Informe o valor da despesa.</small>
 </label>
 </div>
 
@@ -83,7 +84,7 @@
            min="1"
            max="120"
            data-expense-installment-count />
-    <small data-expense-installment-help>O valor total será dividido automaticamente.</small>
+    <small data-expense-installment-help>Informe quantas parcelas ou boletos terão o mesmo valor informado acima.</small>
 </label>
 </div>
 

@@ -92,6 +92,8 @@
     const expenseInstallmentCount = document.querySelector("[data-expense-installment-count]");
     const expenseInstallmentLabel = document.querySelector("[data-expense-installment-label]");
     const expenseInstallmentHelp = document.querySelector("[data-expense-installment-help]");
+    const expenseAmountLabel = document.querySelector("[data-expense-amount-label]");
+    const expenseAmountHelp = document.querySelector("[data-expense-amount-help]");
     const expenseBoletoDateBlock = document.querySelector("[data-expense-boleto-date]");
     const firstBoletoDate = document.querySelector("[data-first-boleto-date]");
     const expensePaidBlock = document.querySelector("[data-expense-paid-block]");
@@ -124,8 +126,24 @@
 
         if (expenseInstallmentHelp) {
             expenseInstallmentHelp.textContent = isBoleto
-                ? "O valor total será dividido entre os boletos."
-                : "O valor total será dividido entre as parcelas.";
+                ? "Cada boleto terá exatamente o valor informado."
+                : "Cada parcela terá exatamente o valor informado.";
+        }
+
+        if (expenseAmountLabel) {
+            expenseAmountLabel.textContent = isCredit
+                ? "Valor da parcela"
+                : isBoleto
+                    ? "Valor do boleto"
+                    : "Valor";
+        }
+
+        if (expenseAmountHelp) {
+            expenseAmountHelp.textContent = isCredit
+                ? "Informe o valor de cada parcela, não o valor total da compra."
+                : isBoleto
+                    ? "Informe o valor de cada boleto, não o valor total do parcelamento."
+                    : "Informe o valor desta despesa.";
         }
 
         if (expenseBoletoDateBlock) {
@@ -146,10 +164,10 @@
         if (expensePaymentMessage) {
             if (isCredit) {
                 expensePaymentMessage.textContent =
-                    "A primeira parcela entra automaticamente no próximo mês; as demais seguem mês a mês.";
+                    "A primeira parcela entra automaticamente no próximo mês; cada parcela terá o valor informado.";
             } else if (isBoleto) {
                 expensePaymentMessage.textContent =
-                    "O primeiro boleto usa a data informada e os demais são projetados mensalmente.";
+                    "O primeiro boleto usa a data informada; os demais seguem mês a mês com o mesmo valor.";
             } else {
                 expensePaymentMessage.textContent =
                     "Este lançamento será registrado automaticamente na data atual.";

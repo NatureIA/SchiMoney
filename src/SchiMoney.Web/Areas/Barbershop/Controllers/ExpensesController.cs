@@ -110,9 +110,6 @@ public class ExpensesController(AppDbContext db) : Controller
             if (installmentCount < 1 || installmentCount > 120)
                 ModelState.AddModelError(nameof(model.PaymentMethod), "Informe entre 1 e 120 parcelas.");
 
-            if (model.Amount < Math.Max(1, installmentCount) * 0.01m)
-                ModelState.AddModelError(nameof(model.Amount), "O valor total é muito baixo para a quantidade de parcelas.");
-
             if (isBoleto && !firstBoletoDate.HasValue)
                 ModelState.AddModelError(nameof(model.PaymentMethod), "Informe a data do primeiro boleto.");
         }
@@ -150,7 +147,7 @@ public class ExpensesController(AppDbContext db) : Controller
         {
             var total = Math.Clamp(installmentCount, 1, 120);
             var groupId = Guid.NewGuid().ToString("N");
-            var installmentAmount = decimal.Round(model.Amount / total, 2, MidpointRounding.AwayFromZero);
+            var installmentAmount = model.Amount;
 
             var anchorDate = isCredit
                 ? DateTime.Today
@@ -158,10 +155,6 @@ public class ExpensesController(AppDbContext db) : Controller
 
             for (var number = 1; number <= total; number++)
             {
-                var amount = number == total
-                    ? model.Amount - (installmentAmount * (total - 1))
-                    : installmentAmount;
-
                 var occurrenceDate = isCredit
                     ? AddMonthsPreservingDay(anchorDate, number)
                     : AddMonthsPreservingDay(anchorDate, number - 1);
@@ -172,7 +165,7 @@ public class ExpensesController(AppDbContext db) : Controller
                     Description = model.Description,
                     Category = model.Category,
                     ExpenseType = model.ExpenseType,
-                    Amount = amount,
+                    Amount = installmentAmount,
                     PaymentMethod = model.PaymentMethod,
                     Date = occurrenceDate,
                     DueDate = null,
@@ -190,7 +183,7 @@ public class ExpensesController(AppDbContext db) : Controller
                 Action = "CREATE",
                 Entity = "BarbershopExpenseInstallments",
                 EntityId = groupId,
-                Details = $"{model.Description} - {model.Amount:C} em {total}x via {model.PaymentMethod}"
+                Details = $"{model.Description} - {total}x de {model.Amount:C} via {model.PaymentMethod} (total {(model.Amount * total):C})"
             });
         }
 
