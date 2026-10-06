@@ -22,13 +22,34 @@
 
 <div class="table-card">
 <table class="data-table">
-<thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Status</th><th class="right">Valor</th><th class="right">Ações</th></tr></thead>
+<thead><tr><th>Competência</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Status</th><th class="right">Valor</th><th class="right">Ações</th></tr></thead>
 <tbody>
 @if(Model.Count==0){<tr><td colspan="7" class="empty-cell">Nenhuma despesa encontrada.</td></tr>}
 @foreach(var item in Model){
 <tr>
-<td>@item.Date.ToString("dd/MM/yyyy")</td><td><strong>@item.Description</strong>@if(item.DueDate.HasValue){<small class="table-sub">Vence @item.DueDate.Value.ToString("dd/MM")</small>}</td><td>@item.Category</td><td>@item.ExpenseType</td>
-<td><span class="status @(item.Paid?"pago":"pendente")">@(item.Paid?"Pago":"Pendente")</span></td><td class="right negative">- @item.Amount.ToString("C")</td>
-<td class="right actions-cell">@if(!item.Paid){<form asp-action="MarkPaid" asp-route-id="@item.Id" method="post"><button class="mini-action success-action" type="submit">Dar baixa</button></form>}<a class="mini-action" asp-action="Edit" asp-route-id="@item.Id">Editar</a><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta despesa?')"><button class="icon-btn" type="submit">×</button></form></td>
+<td>@item.Date.ToString("dd/MM/yyyy")</td>
+<td>
+    <strong>@item.Description</strong>
+    @if(item.InstallmentTotal.HasValue)
+    {
+        <small class="table-sub">@item.PaymentMethod · Parcela @item.InstallmentNumber/@item.InstallmentTotal</small>
+    }
+</td>
+<td>@item.Category</td>
+<td>@item.ExpenseType</td>
+<td><span class="status @(item.Paid?"pago":"pendente")">@(item.Paid?"Pago":"Pendente")</span></td>
+<td class="right negative">- @item.Amount.ToString("C")</td>
+<td class="right actions-cell">
+    @if(!item.Paid)
+    {
+        <form asp-action="MarkPaid" asp-route-id="@item.Id" method="post">
+            <button class="mini-action success-action" type="submit">Dar baixa</button>
+        </form>
+    }
+    <a class="mini-action" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+    <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta despesa?')">
+        <button class="icon-btn" type="submit">×</button>
+    </form>
+</td>
 </tr>}
 </tbody></table></div>

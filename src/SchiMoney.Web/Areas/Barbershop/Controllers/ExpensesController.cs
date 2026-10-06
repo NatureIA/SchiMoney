@@ -72,40 +72,127 @@ public class ExpensesController(AppDbContext db) : Controller
     public async Task<IActionResult> Create()
     {
         await LoadCategoriesAsync();
+
+        ViewBag.InstallmentCount = 1;
+        ViewBag.FirstBoletoDate = string.Empty;
+
         return View(new BarbershopExpense
         {
             Date = DateTime.Today,
             Paid = true,
-            Category = DefaultCategories[0]
+            Category = DefaultCategories[0],
+            PaymentMethod = "Pix"
         });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         BarbershopExpense model,
-        string? newCategoryName)
+        string? newCategoryName,
+        int installmentCount = 1,
+        DateTime? firstBoletoDate = null)
     {
         ModelState.Remove(nameof(model.UserId));
+        ModelState.Remove(nameof(model.Date));
+        ModelState.Remove(nameof(model.DueDate));
+        ModelState.Remove(nameof(model.InstallmentGroupId));
+        ModelState.Remove(nameof(model.InstallmentNumber));
+        ModelState.Remove(nameof(model.InstallmentTotal));
 
         ResolveCustomCategory(model, newCategoryName);
+
+        var isCredit = model.PaymentMethod == "Crédito";
+        var isBoleto = model.PaymentMethod == "Boleto";
+        var isInstallmentPayment = isCredit || isBoleto;
+
+        if (isInstallmentPayment)
+        {
+            if (installmentCount < 1 || installmentCount > 120)
+                ModelState.AddModelError(nameof(model.PaymentMethod), "Informe entre 1 e 120 parcelas.");
+
+            if (model.Amount < Math.Max(1, installmentCount) * 0.01m)
+                ModelState.AddModelError(nameof(model.Amount), "O valor total é muito baixo para a quantidade de parcelas.");
+
+            if (isBoleto && !firstBoletoDate.HasValue)
+                ModelState.AddModelError(nameof(model.PaymentMethod), "Informe a data do primeiro boleto.");
+        }
 
         if (!ModelState.IsValid)
         {
             ViewBag.NewCategoryName = newCategoryName;
-            await LoadCategoriesAsync();
+            ViewBag.InstallmentCount = installmentCount < 1 ? 1 : installmentCount;
+            ViewBag.FirstBoletoDate = firstBoletoDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            await LoadCategoriesAsync(model.Category);
             return View(model);
         }
 
         model.UserId = UserId;
+        model.DueDate = null;
 
-        db.BarbershopExpenses.Add(model);
-        db.AuditLogs.Add(new AuditLog
+        if (!isInstallmentPayment)
         {
-            UserId = UserId,
-            Action = "CREATE",
-            Entity = "BarbershopExpense",
-            Details = $"{model.Description} - {model.Amount:C}"
-        });
+            model.Date = DateTime.Today;
+            model.InstallmentGroupId = null;
+            model.InstallmentNumber = null;
+            model.InstallmentTotal = null;
+
+            db.BarbershopExpenses.Add(model);
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                UserId = UserId,
+                Action = "CREATE",
+                Entity = "BarbershopExpense",
+                Details = $"{model.Description} - {model.Amount:C}"
+            });
+        }
+        else
+        {
+            var total = Math.Clamp(installmentCount, 1, 120);
+            var groupId = Guid.NewGuid().ToString("N");
+            var installmentAmount = decimal.Round(model.Amount / total, 2, MidpointRounding.AwayFromZero);
+
+            var anchorDate = isCredit
+                ? DateTime.Today
+                : firstBoletoDate!.Value.Date;
+
+            for (var number = 1; number <= total; number++)
+            {
+                var amount = number == total
+                    ? model.Amount - (installmentAmount * (total - 1))
+                    : installmentAmount;
+
+                var occurrenceDate = isCredit
+                    ? AddMonthsPreservingDay(anchorDate, number)
+                    : AddMonthsPreservingDay(anchorDate, number - 1);
+
+                db.BarbershopExpenses.Add(new BarbershopExpense
+                {
+                    UserId = UserId,
+                    Description = model.Description,
+                    Category = model.Category,
+                    ExpenseType = model.ExpenseType,
+                    Amount = amount,
+                    PaymentMethod = model.PaymentMethod,
+                    Date = occurrenceDate,
+                    DueDate = null,
+                    Paid = false,
+                    InstallmentGroupId = groupId,
+                    InstallmentNumber = number,
+                    InstallmentTotal = total,
+                    Notes = model.Notes
+                });
+            }
+
+            db.AuditLogs.Add(new AuditLog
+            {
+                UserId = UserId,
+                Action = "CREATE",
+                Entity = "BarbershopExpenseInstallments",
+                EntityId = groupId,
+                Details = $"{model.Description} - {model.Amount:C} em {total}x via {model.PaymentMethod}"
+            });
+        }
 
         await db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
@@ -137,6 +224,11 @@ public class ExpensesController(AppDbContext db) : Controller
             return NotFound();
 
         ModelState.Remove(nameof(model.UserId));
+        ModelState.Remove(nameof(model.Date));
+        ModelState.Remove(nameof(model.DueDate));
+        ModelState.Remove(nameof(model.InstallmentGroupId));
+        ModelState.Remove(nameof(model.InstallmentNumber));
+        ModelState.Remove(nameof(model.InstallmentTotal));
 
         ResolveCustomCategory(model, newCategoryName);
 
@@ -152,8 +244,7 @@ public class ExpensesController(AppDbContext db) : Controller
         item.ExpenseType = model.ExpenseType;
         item.Amount = model.Amount;
         item.PaymentMethod = model.PaymentMethod;
-        item.Date = model.Date;
-        item.DueDate = model.DueDate;
+        item.DueDate = null;
         item.Paid = model.Paid;
         item.Notes = model.Notes;
 
@@ -179,6 +270,7 @@ public class ExpensesController(AppDbContext db) : Controller
         if (item is not null)
         {
             item.Paid = true;
+
             db.AuditLogs.Add(new AuditLog
             {
                 UserId = UserId,
@@ -187,6 +279,7 @@ public class ExpensesController(AppDbContext db) : Controller
                 EntityId = id.ToString(),
                 Details = item.Description
             });
+
             await db.SaveChangesAsync();
         }
 
@@ -273,5 +366,13 @@ public class ExpensesController(AppDbContext db) : Controller
             })
             .ThenBy(x => x)
             .ToList();
+    }
+
+    private static DateTime AddMonthsPreservingDay(DateTime anchor, int months)
+    {
+        var targetMonth = new DateTime(anchor.Year, anchor.Month, 1).AddMonths(months);
+        var day = Math.Min(anchor.Day, DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month));
+
+        return new DateTime(targetMonth.Year, targetMonth.Month, day);
     }
 }

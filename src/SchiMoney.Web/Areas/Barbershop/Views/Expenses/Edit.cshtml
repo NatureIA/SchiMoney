@@ -5,7 +5,19 @@
     var newCategoryName = ViewBag.NewCategoryName as string ?? string.Empty;
 }
 <div class="form-shell">
-<div class="form-heading"><span class="eyebrow">Barbearia</span><h2>Editar despesa</h2><p>Atualize esta ocorrência financeira.</p></div>
+<div class="form-heading">
+    <span class="eyebrow">Barbearia</span>
+    <h2>Editar despesa</h2>
+    @if (Model.InstallmentTotal.HasValue)
+    {
+        <p>Parcela @Model.InstallmentNumber/@Model.InstallmentTotal · competência @Model.Date.ToString("dd/MM/yyyy").</p>
+    }
+    else
+    {
+        <p>Lançamento de @Model.Date.ToString("dd/MM/yyyy").</p>
+    }
+</div>
+
 <form method="post" class="smart-form">
 <div asp-validation-summary="ModelOnly" class="validation"></div>
 
@@ -26,7 +38,13 @@
     </select>
     <span asp-validation-for="Category" class="validation"></span>
 </label>
-<label><span>Tipo</span><select asp-for="ExpenseType"><option>Fixa</option><option>Variável</option></select></label>
+<label>
+    <span>Tipo</span>
+    <select asp-for="ExpenseType">
+        <option>Fixa</option>
+        <option>Variável</option>
+    </select>
+</label>
 </div>
 
 <div data-new-expense-category-block hidden>
@@ -38,17 +56,34 @@
                maxlength="80"
                data-new-expense-category-name
                placeholder="Ex.: Funcionários, Contabilidade, Limpeza..." />
-        <small>Depois de salvar, essa categoria ficará disponível nas próximas despesas.</small>
     </label>
 </div>
 
-<div class="field-grid three">
-<label><span>Data</span><input asp-for="Date" type="date" /></label>
-<label><span>Vencimento</span><input asp-for="DueDate" type="date" /></label>
-<label><span>Pagamento</span><select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Transferência</option></select></label>
-</div>
+<label>
+    <span>Pagamento</span>
+    <select asp-for="PaymentMethod">
+        <option>Pix</option>
+        <option>Dinheiro</option>
+        <option>Débito</option>
+        <option>Crédito</option>
+        <option>Boleto</option>
+        <option>Transferência</option>
+    </select>
+</label>
 
-<label class="check-row"><input asp-for="Paid" /><span>Despesa paga</span></label>
-<label><span>Observações</span><textarea asp-for="Notes" rows="3"></textarea></label>
-<div class="form-actions"><a class="secondary-btn" asp-action="Index">Cancelar</a><button class="primary-btn" type="submit">Salvar alterações</button></div>
-</form></div>
+<label class="check-row">
+    <input asp-for="Paid" />
+    <span>Despesa paga</span>
+</label>
+
+<label>
+    <span>Observações</span>
+    <textarea asp-for="Notes" rows="3"></textarea>
+</label>
+
+<div class="form-actions">
+    <a class="secondary-btn" asp-action="Index">Cancelar</a>
+    <button class="primary-btn" type="submit">Salvar alterações</button>
+</div>
+</form>
+</div>

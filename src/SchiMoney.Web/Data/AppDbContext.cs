@@ -38,5 +38,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<BarbershopSale>().HasIndex(x => new { x.RecurringSeriesId, x.RecurringOccurrenceKey });
         builder.Entity<BarbershopRecurringSale>().HasIndex(x => new { x.UserId, x.Active });
         builder.Entity<BarbershopExpense>().HasIndex(x => new { x.UserId, x.Date });
+        builder.Entity<BarbershopExpense>().HasIndex(x => x.InstallmentGroupId);
     }
 }

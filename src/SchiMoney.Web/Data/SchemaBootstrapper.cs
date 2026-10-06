@@ -92,6 +92,9 @@ BEGIN
         [Date] datetime2 NOT NULL,
         [DueDate] datetime2 NULL,
         [Paid] bit NOT NULL,
+        [InstallmentGroupId] nvarchar(36) NULL,
+        [InstallmentNumber] int NULL,
+        [InstallmentTotal] int NULL,
         [Notes] nvarchar(500) NULL,
         [CreatedAt] datetime2 NOT NULL
     );
@@ -194,5 +197,38 @@ END;
 """;
 
         await db.Database.ExecuteSqlRawAsync(recurringIndexesSql);
+
+        var expenseInstallmentStructureSql = """
+IF COL_LENGTH('BarbershopExpenses', 'InstallmentGroupId') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopExpenses] ADD [InstallmentGroupId] nvarchar(36) NULL;
+END;
+
+IF COL_LENGTH('BarbershopExpenses', 'InstallmentNumber') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopExpenses] ADD [InstallmentNumber] int NULL;
+END;
+
+IF COL_LENGTH('BarbershopExpenses', 'InstallmentTotal') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopExpenses] ADD [InstallmentTotal] int NULL;
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(expenseInstallmentStructureSql);
+
+        var expenseInstallmentIndexSql = """
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_BarbershopExpenses_InstallmentGroupId'
+      AND object_id = OBJECT_ID('BarbershopExpenses')
+)
+BEGIN
+    CREATE INDEX [IX_BarbershopExpenses_InstallmentGroupId]
+        ON [BarbershopExpenses]([InstallmentGroupId]);
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(expenseInstallmentIndexSql);
     }
 }

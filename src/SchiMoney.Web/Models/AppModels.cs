@@ -99,6 +99,9 @@ public class BarbershopExpense
     [DataType(DataType.Date)] public DateTime Date { get; set; } = DateTime.Today;
     [DataType(DataType.Date)] public DateTime? DueDate { get; set; }
     public bool Paid { get; set; } = true;
+    [MaxLength(36)] public string? InstallmentGroupId { get; set; }
+    public int? InstallmentNumber { get; set; }
+    public int? InstallmentTotal { get; set; }
     [MaxLength(500)] public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
