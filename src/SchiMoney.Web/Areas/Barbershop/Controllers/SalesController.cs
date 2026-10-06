@@ -4,14 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchiMoney.Web.Data;
 using SchiMoney.Web.Models;
-using SchiMoney.Web.Services;
 
 namespace SchiMoney.Web.Areas.Barbershop.Controllers;
 
 [Area("Barbershop"), Authorize]
-public class SalesController(
-    AppDbContext db,
-    BarbershopRecurringSaleService recurringSales) : Controller
+public class SalesController(AppDbContext db) : Controller
 {
     private static readonly string[] PreferredServices =
     [
@@ -23,44 +20,20 @@ public class SalesController(
 
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    public async Task<IActionResult> Index(
-        string? q = null,
-        string? payment = null,
-        int? year = null,
-        int? month = null)
+    public async Task<IActionResult> Index(string? q = null, string? payment = null, int? year = null, int? month = null)
     {
-        await recurringSales.EnsureCurrentOccurrencesAsync(UserId);
-
-        var query = db.BarbershopSales
-            .AsNoTracking()
-            .Where(x => x.UserId == UserId);
-
+        var query = db.BarbershopSales.AsNoTracking().Where(x => x.UserId == UserId);
         if (!string.IsNullOrWhiteSpace(q))
-            query = query.Where(x =>
-                x.ServiceName.Contains(q) ||
-                (x.CustomerName != null && x.CustomerName.Contains(q)));
-
+            query = query.Where(x => x.ServiceName.Contains(q) || (x.CustomerName != null && x.CustomerName.Contains(q)));
         if (!string.IsNullOrWhiteSpace(payment))
             query = query.Where(x => x.PaymentMethod == payment);
-
-        if (year.HasValue)
-            query = query.Where(x => x.Date.Year == year.Value);
-
-        if (month.HasValue)
-            query = query.Where(x => x.Date.Month == month.Value);
+        if (year.HasValue) query = query.Where(x => x.Date.Year == year.Value);
+        if (month.HasValue) query = query.Where(x => x.Date.Month == month.Value);
 
         ViewBag.Q = q;
         ViewBag.Payment = payment;
         ViewBag.Year = year;
         ViewBag.Month = month;
-
-        var activeSeriesIds = await db.BarbershopRecurringSales
-            .AsNoTracking()
-            .Where(x => x.UserId == UserId && x.Active)
-            .Select(x => x.Id)
-            .ToListAsync();
-
-        ViewBag.ActiveRecurringSeriesIds = new HashSet<int>(activeSeriesIds);
 
         return View(await query
             .OrderByDescending(x => x.Date)
@@ -77,22 +50,16 @@ public class SalesController(
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        BarbershopSale model,
-        string? newServiceName,
-        bool isRecurring = false)
+    public async Task<IActionResult> Create(BarbershopSale model, string? newServiceName)
     {
         model.Date = DateTime.Today;
-
         ModelState.Remove(nameof(model.UserId));
         ModelState.Remove(nameof(model.Date));
 
         if (model.ServiceName == "__new__")
         {
             if (string.IsNullOrWhiteSpace(newServiceName))
-                ModelState.AddModelError(
-                    nameof(model.ServiceName),
-                    "Informe o nome do novo serviço.");
+                ModelState.AddModelError(nameof(model.ServiceName), "Informe o nome do novo serviço.");
             else
                 model.ServiceName = newServiceName.Trim();
         }
@@ -100,7 +67,6 @@ public class SalesController(
         if (!ModelState.IsValid)
         {
             ViewBag.NewServiceName = newServiceName;
-            ViewBag.IsRecurring = isRecurring;
             await LoadServices();
             return View(model);
         }
@@ -109,40 +75,7 @@ public class SalesController(
 
         await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
 
-        await using var transaction = await db.Database.BeginTransactionAsync();
-
-        if (isRecurring)
-        {
-            var series = new BarbershopRecurringSale
-            {
-                UserId = UserId,
-                ServiceName = model.ServiceName,
-                Amount = model.Amount,
-                PaymentMethod = model.PaymentMethod,
-                CustomerName = model.CustomerName,
-                Notes = model.Notes,
-                StartDate = DateTime.Today,
-                Active = true
-            };
-
-            db.BarbershopRecurringSales.Add(series);
-            await db.SaveChangesAsync();
-
-            model.RecurringSeriesId = series.Id;
-            model.RecurringOccurrenceKey = DateTime.Today.ToString("yyyy-MM");
-
-            db.AuditLogs.Add(new AuditLog
-            {
-                UserId = UserId,
-                Action = "CREATE",
-                Entity = "BarbershopRecurringSale",
-                EntityId = series.Id.ToString(),
-                Details = $"{model.ServiceName} - recorrência mensal iniciada"
-            });
-        }
-
         db.BarbershopSales.Add(model);
-
         db.AuditLogs.Add(new AuditLog
         {
             UserId = UserId,
@@ -152,58 +85,31 @@ public class SalesController(
         });
 
         await db.SaveChangesAsync();
-        await transaction.CommitAsync();
-
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        await recurringSales.EnsureCurrentOccurrencesAsync(UserId);
-
-        var item = await db.BarbershopSales
-            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
-
-        if (item is null)
-            return NotFound();
-
-        if (item.RecurringSeriesId.HasValue)
-        {
-            var series = await recurringSales.GetSeriesAsync(
-                item.RecurringSeriesId.Value,
-                UserId);
-
-            ViewBag.IsRecurring = true;
-            ViewBag.RecurrenceActive = series?.Active == true;
-            ViewBag.RecurrenceEndDate = series?.EndDate;
-        }
+        var item = await db.BarbershopSales.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
+        if (item is null) return NotFound();
 
         await LoadServices();
         return View(item);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(
-        int id,
-        BarbershopSale model,
-        string? newServiceName)
+    public async Task<IActionResult> Edit(int id, BarbershopSale model, string? newServiceName)
     {
-        var item = await db.BarbershopSales
-            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
-
-        if (item is null)
-            return NotFound();
+        var item = await db.BarbershopSales.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
+        if (item is null) return NotFound();
 
         ModelState.Remove(nameof(model.UserId));
-        ModelState.Remove(nameof(model.Date));
 
         if (model.ServiceName == "__new__")
         {
             if (string.IsNullOrWhiteSpace(newServiceName))
-                ModelState.AddModelError(
-                    nameof(model.ServiceName),
-                    "Informe o nome do novo serviço.");
+                ModelState.AddModelError(nameof(model.ServiceName), "Informe o nome do novo serviço.");
             else
                 model.ServiceName = newServiceName.Trim();
         }
@@ -211,103 +117,37 @@ public class SalesController(
         if (!ModelState.IsValid)
         {
             ViewBag.NewServiceName = newServiceName;
-
-            if (item.RecurringSeriesId.HasValue)
-            {
-                var series = await recurringSales.GetSeriesAsync(
-                    item.RecurringSeriesId.Value,
-                    UserId);
-
-                ViewBag.IsRecurring = true;
-                ViewBag.RecurrenceActive = series?.Active == true;
-                ViewBag.RecurrenceEndDate = series?.EndDate;
-            }
-
             await LoadServices();
             return View(model);
         }
 
         await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
 
-        if (item.RecurringSeriesId.HasValue)
-        {
-            var seriesId = item.RecurringSeriesId.Value;
-
-            var occurrencesFromThisMonth = await db.BarbershopSales
-                .Where(x =>
-                    x.UserId == UserId &&
-                    x.RecurringSeriesId == seriesId &&
-                    x.Date >= item.Date)
-                .ToListAsync();
-
-            foreach (var occurrence in occurrencesFromThisMonth)
-            {
-                occurrence.ServiceName = model.ServiceName;
-                occurrence.Amount = model.Amount;
-                occurrence.PaymentMethod = model.PaymentMethod;
-                occurrence.CustomerName = model.CustomerName;
-                occurrence.Notes = model.Notes;
-            }
-
-            var series = await recurringSales.GetSeriesAsync(
-                seriesId,
-                UserId);
-
-            if (series is not null)
-            {
-                series.ServiceName = model.ServiceName;
-                series.Amount = model.Amount;
-                series.PaymentMethod = model.PaymentMethod;
-                series.CustomerName = model.CustomerName;
-                series.Notes = model.Notes;
-                series.UpdatedAt = DateTime.UtcNow;
-            }
-        }
-        else
-        {
-            item.ServiceName = model.ServiceName;
-            item.Amount = model.Amount;
-            item.PaymentMethod = model.PaymentMethod;
-            item.CustomerName = model.CustomerName;
-            item.Notes = model.Notes;
-        }
+        item.ServiceName = model.ServiceName;
+        item.Amount = model.Amount;
+        item.PaymentMethod = model.PaymentMethod;
+        item.CustomerName = model.CustomerName;
+        item.Notes = model.Notes;
 
         db.AuditLogs.Add(new AuditLog
         {
             UserId = UserId,
             Action = "UPDATE",
-            Entity = item.RecurringSeriesId.HasValue
-                ? "BarbershopRecurringSale"
-                : "BarbershopSale",
-            EntityId = item.RecurringSeriesId?.ToString() ?? id.ToString(),
+            Entity = "BarbershopSale",
+            EntityId = id.ToString(),
             Details = item.ServiceName
         });
 
         await db.SaveChangesAsync();
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> EndRecurring(int seriesId)
-    {
-        await recurringSales.EnsureCurrentOccurrencesAsync(UserId);
-        await recurringSales.EndSeriesAsync(seriesId, UserId);
-
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var item = await db.BarbershopSales
-            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
-
+        var item = await db.BarbershopSales.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
         if (item is not null)
         {
-            if (item.RecurringSeriesId.HasValue)
-                return RedirectToAction(nameof(Index));
-
             db.AuditLogs.Add(new AuditLog
             {
                 UserId = UserId,
@@ -335,8 +175,7 @@ public class SalesController(
 
         foreach (var preferredName in PreferredServices)
         {
-            var saved = savedServices.FirstOrDefault(
-                x => x.Name == preferredName);
+            var saved = savedServices.FirstOrDefault(x => x.Name == preferredName);
 
             services.Add(saved ?? new BarbershopService
             {
@@ -355,17 +194,13 @@ public class SalesController(
         ViewBag.Services = services;
     }
 
-    private async Task EnsureServiceCatalogAsync(
-        string serviceName,
-        decimal saleAmount)
+    private async Task EnsureServiceCatalogAsync(string serviceName, decimal saleAmount)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return;
 
         var existing = await db.BarbershopServices
-            .FirstOrDefaultAsync(x =>
-                x.UserId == UserId &&
-                x.Name == serviceName);
+            .FirstOrDefaultAsync(x => x.UserId == UserId && x.Name == serviceName);
 
         if (existing is not null)
         {
@@ -375,8 +210,7 @@ public class SalesController(
             return;
         }
 
-        if (PreferredServices.Contains(serviceName) &&
-            serviceName == "Pomada")
+        if (PreferredServices.Contains(serviceName) && serviceName == "Pomada")
             return;
 
         db.BarbershopServices.Add(new BarbershopService
