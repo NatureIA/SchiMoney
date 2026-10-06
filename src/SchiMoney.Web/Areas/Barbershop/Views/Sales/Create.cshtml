@@ -2,27 +2,91 @@
 @{
     ViewData["Title"] = "Registrar venda";
     var services = ViewBag.Services as List<BarbershopService> ?? [];
+    var newServiceName = ViewBag.NewServiceName as string ?? string.Empty;
 }
 <div class="form-shell">
-<div class="form-heading"><span class="eyebrow">Barbearia</span><h2>Nova venda</h2><p>Registre o faturamento em poucos segundos.</p></div>
+<div class="form-heading">
+    <span class="eyebrow">Barbearia</span>
+    <h2>Nova venda</h2>
+    <p>Registre o faturamento em poucos segundos.</p>
+</div>
+
 <form method="post" class="smart-form">
 <div asp-validation-summary="ModelOnly" class="validation"></div>
+
 <div class="field-grid two">
-<label><span>Serviço</span>
-<select asp-for="ServiceName" data-service>
-<option value="">Selecione</option>
-@foreach(var s in services){<option value="@s.Name" data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">@s.Name — @s.Price.ToString("C")</option>}
-<option value="Outro">Outro</option>
-</select>
+<label>
+    <span>Serviço</span>
+    <select asp-for="ServiceName" data-service required>
+        <option value="">Selecione</option>
+        @foreach (var s in services)
+        {
+            if (s.Price > 0)
+            {
+                <option value="@s.Name" data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                    @s.Name — @s.Price.ToString("C")
+                </option>
+            }
+            else
+            {
+                <option value="@s.Name">@s.Name</option>
+            }
+        }
+        <option value="__new__">+ Criar novo serviço</option>
+    </select>
+    <span asp-validation-for="ServiceName" class="validation"></span>
 </label>
-<label><span>Valor</span><input asp-for="Amount" type="number" step="0.01" data-sale-amount /></label>
+
+<label>
+    <span>Valor</span>
+    <input asp-for="Amount" type="number" step="0.01" min="0.01" data-sale-amount required />
+</label>
 </div>
+
+<div data-new-service-block hidden>
+    <label>
+        <span>Nome do novo serviço</span>
+        <input type="text"
+               name="newServiceName"
+               value="@newServiceName"
+               maxlength="120"
+               data-new-service-name
+               placeholder="Ex.: Sobrancelha, hidratação, pigmentação..." />
+        <small>Depois de salvar, ele ficará disponível nas próximas vendas.</small>
+    </label>
+</div>
+
 <div class="field-grid three">
-<label><span>Data</span><input asp-for="Date" type="date" /></label>
-<label><span>Pagamento</span><select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Transferência</option></select></label>
-<label><span>Cliente</span><input asp-for="CustomerName" placeholder="Opcional" /></label>
+<label>
+    <span>Data</span>
+    <input asp-for="Date" type="date" />
+</label>
+
+<label>
+    <span>Pagamento</span>
+    <select asp-for="PaymentMethod">
+        <option>Pix</option>
+        <option>Dinheiro</option>
+        <option>Débito</option>
+        <option>Crédito</option>
+        <option>Transferência</option>
+    </select>
+</label>
+
+<label>
+    <span>Cliente</span>
+    <input asp-for="CustomerName" placeholder="Opcional" />
+</label>
 </div>
-<label><span>Observações</span><textarea asp-for="Notes" rows="3"></textarea></label>
-<div class="form-actions"><a class="secondary-btn" asp-action="Index">Cancelar</a><button class="primary-btn" type="submit">Salvar venda</button></div>
+
+<label>
+    <span>Observações</span>
+    <textarea asp-for="Notes" rows="3"></textarea>
+</label>
+
+<div class="form-actions">
+    <a class="secondary-btn" asp-action="Index">Cancelar</a>
+    <button class="primary-btn" type="submit">Salvar venda</button>
+</div>
 </form>
 </div>
