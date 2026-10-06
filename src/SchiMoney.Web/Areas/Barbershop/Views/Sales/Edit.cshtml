@@ -3,6 +3,8 @@
     ViewData["Title"] = "Editar venda";
     var services = ViewBag.Services as List<BarbershopService> ?? [];
     var newServiceName = ViewBag.NewServiceName as string ?? string.Empty;
+    var isRecurring = Model.RecurringSeriesId.HasValue;
+    var recurrenceActive = ViewBag.RecurrenceActive == true;
 }
 <div class="form-shell">
 <div class="form-heading">
@@ -10,6 +12,21 @@
     <h2>Editar venda</h2>
     <p>Ajuste serviço, valor ou forma de pagamento.</p>
 </div>
+
+@if (isRecurring)
+{
+    <div class="insight-card">
+        <span class="insight-badge">Venda recorrente</span>
+        @if (recurrenceActive)
+        {
+            <p>As alterações feitas aqui passam a valer para esta ocorrência e para os próximos meses. Os meses anteriores permanecem preservados.</p>
+        }
+        else
+        {
+            <p>Esta recorrência já foi encerrada. Os lançamentos anteriores permanecem no histórico.</p>
+        }
+    </div>
+}
 
 <form method="post" class="smart-form">
 <div asp-validation-summary="ModelOnly" class="validation"></div>
@@ -89,4 +106,13 @@
     <button class="primary-btn" type="submit">Salvar alterações</button>
 </div>
 </form>
+
+@if (isRecurring && recurrenceActive && Model.RecurringSeriesId.HasValue)
+{
+    <form asp-action="EndRecurring" method="post" class="form-actions recurrence-end-form"
+          onsubmit="return confirm('Encerrar esta recorrência? Os meses já lançados serão mantidos.')">
+        <input type="hidden" name="seriesId" value="@Model.RecurringSeriesId.Value" />
+        <button class="secondary-btn" type="submit">Encerrar recorrência</button>
+    </form>
+}
 </div>
