@@ -29,9 +29,36 @@
 
     const service = document.querySelector("[data-service]");
     const amount = document.querySelector("[data-sale-amount]");
-    service?.addEventListener("change", () => {
+    const newServiceBlock = document.querySelector("[data-new-service-block]");
+    const newServiceName = document.querySelector("[data-new-service-name]");
+
+    const refreshService = (clearAmount = false) => {
+        if (!service) return;
+
         const selected = service.options[service.selectedIndex];
+        const isNew = selected?.value === "__new__";
         const price = selected?.dataset?.price;
-        if (price && amount) amount.value = Number(price).toFixed(2);
-    });
+
+        if (newServiceBlock) {
+            newServiceBlock.hidden = !isNew;
+        }
+
+        if (newServiceName) {
+            newServiceName.required = isNew;
+            if (!isNew) {
+                newServiceName.value = "";
+            }
+        }
+
+        if (amount && clearAmount) {
+            if (price) {
+                amount.value = Number(price).toFixed(2);
+            } else if (isNew || selected?.value === "Pomada") {
+                amount.value = "";
+            }
+        }
+    };
+
+    service?.addEventListener("change", () => refreshService(true));
+    refreshService(false);
 })();
