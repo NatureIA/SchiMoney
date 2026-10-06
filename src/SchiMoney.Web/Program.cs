@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SchiMoney.Web.Data;
 using SchiMoney.Web.Models;
@@ -58,7 +59,25 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+var staticContentTypes = new FileExtensionContentTypeProvider();
+staticContentTypes.Mappings[".webmanifest"] = "application/manifest+json";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticContentTypes,
+    OnPrepareResponse = context =>
+    {
+        var path = context.Context.Request.Path.Value ?? "";
+
+        if (path.EndsWith("manifest.webmanifest", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+        }
+    }
+});
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
