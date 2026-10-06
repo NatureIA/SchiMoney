@@ -338,7 +338,7 @@ public class SalesController(
             {
                 UserId = UserId,
                 Name = preferredName,
-                Price = saleAmount,
+                Price = 0.01m,
                 Active = true
             });
         }
@@ -378,7 +378,7 @@ public class SalesController(
         {
             UserId = UserId,
             Name = serviceName.Trim(),
-            Price = 0,
+            Price = saleAmount,
             Active = true
         });
     }
