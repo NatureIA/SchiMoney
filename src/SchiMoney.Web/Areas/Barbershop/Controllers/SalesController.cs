@@ -229,16 +229,28 @@ public class SalesController(
 
         await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
 
-        item.ServiceName = model.ServiceName;
-        item.Amount = model.Amount;
-        item.PaymentMethod = model.PaymentMethod;
-        item.CustomerName = model.CustomerName;
-        item.Notes = model.Notes;
-
         if (item.RecurringSeriesId.HasValue)
         {
+            var seriesId = item.RecurringSeriesId.Value;
+
+            var occurrencesFromThisMonth = await db.BarbershopSales
+                .Where(x =>
+                    x.UserId == UserId &&
+                    x.RecurringSeriesId == seriesId &&
+                    x.Date >= item.Date)
+                .ToListAsync();
+
+            foreach (var occurrence in occurrencesFromThisMonth)
+            {
+                occurrence.ServiceName = model.ServiceName;
+                occurrence.Amount = model.Amount;
+                occurrence.PaymentMethod = model.PaymentMethod;
+                occurrence.CustomerName = model.CustomerName;
+                occurrence.Notes = model.Notes;
+            }
+
             var series = await recurringSales.GetSeriesAsync(
-                item.RecurringSeriesId.Value,
+                seriesId,
                 UserId);
 
             if (series is not null)
@@ -250,6 +262,14 @@ public class SalesController(
                 series.Notes = model.Notes;
                 series.UpdatedAt = DateTime.UtcNow;
             }
+        }
+        else
+        {
+            item.ServiceName = model.ServiceName;
+            item.Amount = model.Amount;
+            item.PaymentMethod = model.PaymentMethod;
+            item.CustomerName = model.CustomerName;
+            item.Notes = model.Notes;
         }
 
         db.AuditLogs.Add(new AuditLog
