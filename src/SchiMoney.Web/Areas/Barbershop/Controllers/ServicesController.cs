@@ -38,14 +38,14 @@ public class ServicesController(AppDbContext db) : Controller
                 {
                     UserId = UserId,
                     Name = normalizedName,
-                    Price = 0,
+                    Price = 0.01m,
                     Active = true
                 });
             }
             else
             {
                 existing.Active = true;
-                existing.Price = 0;
+                existing.Price = 0.01m;
             }
 
             await db.SaveChangesAsync();
@@ -63,7 +63,7 @@ public class ServicesController(AppDbContext db) : Controller
         if (item is not null && !string.IsNullOrWhiteSpace(name))
         {
             item.Name = name.Trim();
-            item.Price = 0;
+            item.Price = 0.01m;
             await db.SaveChangesAsync();
         }
 
