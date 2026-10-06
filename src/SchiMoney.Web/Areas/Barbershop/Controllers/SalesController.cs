@@ -52,7 +52,9 @@ public class SalesController(AppDbContext db) : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BarbershopSale model, string? newServiceName)
     {
+        model.Date = DateTime.Today;
         ModelState.Remove(nameof(model.UserId));
+        ModelState.Remove(nameof(model.Date));
 
         if (model.ServiceName == "__new__")
         {
@@ -124,7 +126,6 @@ public class SalesController(AppDbContext db) : Controller
         item.ServiceName = model.ServiceName;
         item.Amount = model.Amount;
         item.PaymentMethod = model.PaymentMethod;
-        item.Date = model.Date;
         item.CustomerName = model.CustomerName;
         item.Notes = model.Notes;
 
