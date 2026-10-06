@@ -4,15 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchiMoney.Web.Data;
 using SchiMoney.Web.Models;
+using SchiMoney.Web.Services;
 
 namespace SchiMoney.Web.Areas.Barbershop.Controllers;
 
 [Area("Barbershop"), Authorize]
-public class ReportsController(AppDbContext db) : Controller
+public class ReportsController(
+    AppDbContext db,
+    BarbershopRecurringSaleService recurringSales) : Controller
 {
     public async Task<IActionResult> Index(int? year = null)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        await recurringSales.EnsureCurrentOccurrencesAsync(userId);
+
         var selectedYear = year ?? DateTime.Today.Year;
         var start = new DateTime(selectedYear, 1, 1);
         var end = start.AddYears(1);
