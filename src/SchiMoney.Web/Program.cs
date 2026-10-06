@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SchiMoney.Web.Data;
 using SchiMoney.Web.Models;
+using SchiMoney.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<BarbershopRecurringSaleService>();
 
 var app = builder.Build();
 
@@ -71,6 +73,7 @@ app.MapGet("/health", async (AppDbContext db) =>
         await db.PersonalAccounts.AsNoTracking().AnyAsync();
         await db.PersonalCreditCards.AsNoTracking().AnyAsync();
         await db.BarbershopSales.AsNoTracking().AnyAsync();
+        await db.BarbershopRecurringSales.AsNoTracking().AnyAsync();
         await db.BarbershopExpenses.AsNoTracking().AnyAsync();
         await db.BarbershopServices.AsNoTracking().AnyAsync();
         await db.FinancialGoals.AsNoTracking().AnyAsync();
