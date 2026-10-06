@@ -1,6 +1,7 @@
 @model List<BarbershopSale>
 @{
     ViewData["Title"] = "Faturamento";
+    var activeRecurringSeriesIds = ViewBag.ActiveRecurringSeriesIds as HashSet<int> ?? new HashSet<int>();
 }
 <div class="page-actions"><p class="page-intro">Vendas e faturamento do módulo Barbearia.</p><a class="primary-btn" asp-action="Create">+ Registrar venda</a></div>
 
@@ -18,9 +19,36 @@
 <tbody>
 @if(Model.Count==0){<tr><td colspan="6" class="empty-cell">Nenhuma venda encontrada.</td></tr>}
 @foreach(var item in Model){
+    var isRecurring = item.RecurringSeriesId.HasValue;
+    var recurrenceActive = isRecurring && activeRecurringSeriesIds.Contains(item.RecurringSeriesId!.Value);
 <tr>
-<td>@item.Date.ToString("dd/MM/yyyy")</td><td><strong>@item.ServiceName</strong></td><td>@(string.IsNullOrWhiteSpace(item.CustomerName)?"—":item.CustomerName)</td><td>@item.PaymentMethod</td>
+<td>@item.Date.ToString("dd/MM/yyyy")</td>
+<td>
+    <strong>@item.ServiceName</strong>
+    @if (isRecurring)
+    {
+        <small class="table-sub">@(recurrenceActive ? "Recorrente" : "Recorrência encerrada")</small>
+    }
+</td>
+<td>@(string.IsNullOrWhiteSpace(item.CustomerName)?"—":item.CustomerName)</td>
+<td>@item.PaymentMethod</td>
 <td class="right positive">+ @item.Amount.ToString("C")</td>
-<td class="right actions-cell"><a class="mini-action" asp-action="Edit" asp-route-id="@item.Id">Editar</a><form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta venda?')"><button class="icon-btn" type="submit">×</button></form></td>
+<td class="right actions-cell">
+    <a class="mini-action" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+    @if (isRecurring && recurrenceActive)
+    {
+        <form asp-action="EndRecurring" method="post"
+              onsubmit="return confirm('Encerrar esta recorrência? Os meses já lançados serão mantidos.')">
+            <input type="hidden" name="seriesId" value="@item.RecurringSeriesId" />
+            <button class="mini-action" type="submit">Encerrar recorrência</button>
+        </form>
+    }
+    else if (!isRecurring)
+    {
+        <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Excluir esta venda?')">
+            <button class="icon-btn" type="submit">×</button>
+        </form>
+    }
+</td>
 </tr>}
 </tbody></table></div>
