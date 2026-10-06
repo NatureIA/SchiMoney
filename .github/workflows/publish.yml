@@ -55,31 +55,26 @@ jobs:
       - name: Verify application and database automatically
         shell: pwsh
         run: |
-          $healthUrls = @(
-            "https://schimoney.runasp.net/health",
-            "http://schimoney.runasp.net/health"
-          )
+          $healthUrl = "https://schimoney.runasp.net/health"
           $maxAttempts = 24
 
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            foreach ($healthUrl in $healthUrls) {
-              try {
-                Write-Host "Health check $attempt/$maxAttempts -> $healthUrl"
-                $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 20 -MaximumRedirection 5
-                if ($response.StatusCode -eq 200) {
-                  $body = $response.Content | ConvertFrom-Json
-                  if ($body.status -eq "healthy" -and $body.database -eq "connected" -and $body.schema -eq "ready") {
-                    Write-Host "SchiMoney publicado e banco validado em $healthUrl."
-                    exit 0
-                  }
+            try {
+              Write-Host "Health check HTTPS $attempt/$maxAttempts -> $healthUrl"
+              $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 20 -MaximumRedirection 5
+              if ($response.StatusCode -eq 200) {
+                $body = $response.Content | ConvertFrom-Json
+                if ($body.status -eq "healthy" -and $body.database -eq "connected" -and $body.schema -eq "ready") {
+                  Write-Host "SchiMoney publicado com HTTPS válido e banco validado."
+                  exit 0
                 }
               }
-              catch {
-                Write-Host "Aplicação ainda inicializando em ${healthUrl}: $($_.Exception.Message)"
-              }
+            }
+            catch {
+              Write-Host "HTTPS ainda indisponível: $($_.Exception.Message)"
             }
 
             Start-Sleep -Seconds 10
           }
 
-          throw "Deploy concluído, mas a verificação automática do SchiMoney/banco não ficou saudável no endereço público."
+          throw "SchiMoney foi publicado, mas HTTPS ainda não está válido. O PWA só será considerado pronto após SSL válido."
