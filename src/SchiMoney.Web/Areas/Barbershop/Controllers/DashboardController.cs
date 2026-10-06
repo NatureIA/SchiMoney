@@ -11,12 +11,14 @@ namespace SchiMoney.Web.Areas.Barbershop.Controllers;
 [Area("Barbershop"), Authorize]
 public class DashboardController(
     AppDbContext db,
-    BarbershopRecurringSaleService recurringSales) : Controller
+    BarbershopRecurringSaleService recurringSales,
+    BarbershopRecurringExpenseService recurringExpenses) : Controller
 {
     public async Task<IActionResult> Index(int? year = null, int? month = null)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         await recurringSales.EnsureCurrentOccurrencesAsync(userId);
+        await recurringExpenses.EnsureCurrentOccurrencesAsync(userId);
 
         var selected = new DateTime(year ?? DateTime.Today.Year, month ?? DateTime.Today.Month, 1);
         var start = selected;

@@ -102,8 +102,27 @@ public class BarbershopExpense
     [MaxLength(36)] public string? InstallmentGroupId { get; set; }
     public int? InstallmentNumber { get; set; }
     public int? InstallmentTotal { get; set; }
+    public int? RecurringSeriesId { get; set; }
+    [MaxLength(7)] public string? RecurringOccurrenceKey { get; set; }
     [MaxLength(500)] public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class BarbershopRecurringExpense
+{
+    public int Id { get; set; }
+    [Required] public string UserId { get; set; } = string.Empty;
+    [Required, MaxLength(140)] public string Description { get; set; } = string.Empty;
+    [Required, MaxLength(80)] public string Category { get; set; } = "Outros";
+    [Required, MaxLength(20)] public string ExpenseType { get; set; } = "Variável";
+    [Range(0.01, 999999999)] public decimal Amount { get; set; }
+    [Required, MaxLength(30)] public string PaymentMethod { get; set; } = "Pix";
+    [DataType(DataType.Date)] public DateTime StartDate { get; set; } = DateTime.Today;
+    [DataType(DataType.Date)] public DateTime? EndDate { get; set; }
+    public bool Active { get; set; } = true;
+    [MaxLength(500)] public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class BarbershopService

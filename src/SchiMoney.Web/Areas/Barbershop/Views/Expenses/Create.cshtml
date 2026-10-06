@@ -5,12 +5,13 @@
     var newCategoryName = ViewBag.NewCategoryName as string ?? string.Empty;
     var installmentCount = ViewBag.InstallmentCount is int count ? count : 1;
     var firstBoletoDate = ViewBag.FirstBoletoDate as string ?? string.Empty;
+    var isRecurring = ViewBag.IsRecurring == true;
 }
 <div class="form-shell">
 <div class="form-heading">
     <span class="eyebrow">Barbearia</span>
     <h2>Registrar despesa</h2>
-    <p>O SchiMoney define automaticamente a competência conforme a forma de pagamento.</p>
+    <p>Registre despesas únicas, parceladas ou recorrentes.</p>
 </div>
 
 <form method="post" class="smart-form">
@@ -63,6 +64,21 @@
     </label>
 </div>
 
+<label class="check-row">
+    @if (isRecurring)
+    {
+        <input type="checkbox" name="isRecurring" value="true" data-expense-recurring checked />
+    }
+    else
+    {
+        <input type="checkbox" name="isRecurring" value="true" data-expense-recurring />
+    }
+    <span>
+        <strong>Despesa recorrente</strong><br />
+        <small>Repete automaticamente todos os meses até você encerrar a recorrência.</small>
+    </span>
+</label>
+
 <div class="field-grid two">
 <label>
     <span>Pagamento</span>
@@ -90,12 +106,12 @@
 
 <div data-expense-boleto-date hidden>
     <label>
-        <span>Data do primeiro boleto</span>
+        <span data-expense-boleto-date-label>Data do primeiro boleto</span>
         <input type="date"
                name="firstBoletoDate"
                value="@firstBoletoDate"
                data-first-boleto-date />
-        <small>Os próximos boletos serão projetados mensalmente a partir desta data.</small>
+        <small data-expense-boleto-date-help>Os próximos boletos serão projetados mensalmente a partir desta data.</small>
     </label>
 </div>
 

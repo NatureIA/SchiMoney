@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BarbershopSale> BarbershopSales => Set<BarbershopSale>();
     public DbSet<BarbershopRecurringSale> BarbershopRecurringSales => Set<BarbershopRecurringSale>();
     public DbSet<BarbershopExpense> BarbershopExpenses => Set<BarbershopExpense>();
+    public DbSet<BarbershopRecurringExpense> BarbershopRecurringExpenses => Set<BarbershopRecurringExpense>();
     public DbSet<BarbershopService> BarbershopServices => Set<BarbershopService>();
     public DbSet<FinancialGoal> FinancialGoals => Set<FinancialGoal>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -27,6 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<BarbershopSale>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<BarbershopRecurringSale>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<BarbershopExpense>().Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Entity<BarbershopRecurringExpense>().Property(x => x.Amount).HasPrecision(18, 2);
         builder.Entity<BarbershopService>().Property(x => x.Price).HasPrecision(18, 2);
         builder.Entity<FinancialGoal>().Property(x => x.TargetAmount).HasPrecision(18, 2);
         builder.Entity<FinancialGoal>().Property(x => x.CurrentAmount).HasPrecision(18, 2);
@@ -39,5 +41,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<BarbershopRecurringSale>().HasIndex(x => new { x.UserId, x.Active });
         builder.Entity<BarbershopExpense>().HasIndex(x => new { x.UserId, x.Date });
         builder.Entity<BarbershopExpense>().HasIndex(x => x.InstallmentGroupId);
+        builder.Entity<BarbershopExpense>().HasIndex(x => new { x.RecurringSeriesId, x.RecurringOccurrenceKey });
+        builder.Entity<BarbershopRecurringExpense>().HasIndex(x => new { x.UserId, x.Active });
     }
 }

@@ -36,6 +36,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<BarbershopRecurringSaleService>();
+builder.Services.AddScoped<BarbershopRecurringExpenseService>();
 
 var app = builder.Build();
 
@@ -75,6 +76,7 @@ app.MapGet("/health", async (AppDbContext db) =>
         await db.BarbershopSales.AsNoTracking().AnyAsync();
         await db.BarbershopRecurringSales.AsNoTracking().AnyAsync();
         await db.BarbershopExpenses.AsNoTracking().AnyAsync();
+        await db.BarbershopRecurringExpenses.AsNoTracking().AnyAsync();
         await db.BarbershopServices.AsNoTracking().AnyAsync();
         await db.FinancialGoals.AsNoTracking().AnyAsync();
 

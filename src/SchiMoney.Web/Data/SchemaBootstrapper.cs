@@ -95,6 +95,8 @@ BEGIN
         [InstallmentGroupId] nvarchar(36) NULL,
         [InstallmentNumber] int NULL,
         [InstallmentTotal] int NULL,
+        [RecurringSeriesId] int NULL,
+        [RecurringOccurrenceKey] nvarchar(7) NULL,
         [Notes] nvarchar(500) NULL,
         [CreatedAt] datetime2 NOT NULL
     );
@@ -230,5 +232,62 @@ END;
 """;
 
         await db.Database.ExecuteSqlRawAsync(expenseInstallmentIndexSql);
+
+        var recurringExpenseStructureSql = """
+IF OBJECT_ID(N'[BarbershopRecurringExpenses]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [BarbershopRecurringExpenses](
+        [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [UserId] nvarchar(450) NOT NULL,
+        [Description] nvarchar(140) NOT NULL,
+        [Category] nvarchar(80) NOT NULL,
+        [ExpenseType] nvarchar(20) NOT NULL,
+        [Amount] decimal(18,2) NOT NULL,
+        [PaymentMethod] nvarchar(30) NOT NULL,
+        [StartDate] datetime2 NOT NULL,
+        [EndDate] datetime2 NULL,
+        [Active] bit NOT NULL,
+        [Notes] nvarchar(500) NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [UpdatedAt] datetime2 NOT NULL
+    );
+END;
+
+IF COL_LENGTH('BarbershopExpenses', 'RecurringSeriesId') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopExpenses] ADD [RecurringSeriesId] int NULL;
+END;
+
+IF COL_LENGTH('BarbershopExpenses', 'RecurringOccurrenceKey') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopExpenses] ADD [RecurringOccurrenceKey] nvarchar(7) NULL;
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(recurringExpenseStructureSql);
+
+        var recurringExpenseIndexesSql = """
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_BarbershopRecurringExpenses_UserId_Active'
+      AND object_id = OBJECT_ID('BarbershopRecurringExpenses')
+)
+BEGIN
+    CREATE INDEX [IX_BarbershopRecurringExpenses_UserId_Active]
+        ON [BarbershopRecurringExpenses]([UserId], [Active]);
+END;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_BarbershopExpenses_RecurringSeriesId_RecurringOccurrenceKey'
+      AND object_id = OBJECT_ID('BarbershopExpenses')
+)
+BEGIN
+    CREATE INDEX [IX_BarbershopExpenses_RecurringSeriesId_RecurringOccurrenceKey]
+        ON [BarbershopExpenses]([RecurringSeriesId], [RecurringOccurrenceKey]);
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(recurringExpenseIndexesSql);
     }
 }
