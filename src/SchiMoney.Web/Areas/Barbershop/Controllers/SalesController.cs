@@ -110,8 +110,6 @@ public class SalesController(
         model.UserId = UserId;
         await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
 
-        await using var transaction = await db.Database.BeginTransactionAsync();
-
         if (isRecurring)
         {
             var recurring = new BarbershopRecurringSale
@@ -153,7 +151,6 @@ public class SalesController(
         });
 
         await db.SaveChangesAsync();
-        await transaction.CommitAsync();
 
         return RedirectToAction(nameof(Index));
     }
