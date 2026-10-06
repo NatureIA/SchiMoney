@@ -37,7 +37,12 @@ public class DashboardController(
             .ToListAsync();
 
         var revenue = sales.Sum(x => x.Amount);
-        var paidExpenses = expenses.Where(x => x.Paid).Sum(x => x.Amount);
+        var currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var includeScheduledExpenses = selected >= currentMonth;
+        var expenseBasis = includeScheduledExpenses
+            ? expenses
+            : expenses.Where(x => x.Paid).ToList();
+        var expenseTotal = expenseBasis.Sum(x => x.Amount);
         var count = sales.Count;
 
         var isCurrent = selected.Year == DateTime.Today.Year && selected.Month == DateTime.Today.Month;
@@ -55,7 +60,7 @@ public class DashboardController(
         var daysRemaining = isCurrent ? Math.Max(1, daysInMonth - DateTime.Today.Day + 1) : 1;
         var dailyNeeded = target > 0 && isCurrent ? Math.Max(0, target - revenue) / daysRemaining : 0;
 
-        var expenseCategories = expenses.Where(x => x.Paid)
+        var expenseCategories = expenseBasis
             .GroupBy(x => x.Category)
             .Select(g => new CategoryTotal(g.Key, g.Sum(x => x.Amount)))
             .OrderByDescending(x => x.Amount).Take(7).ToList();
@@ -72,15 +77,22 @@ public class DashboardController(
         var trendSales = await db.BarbershopSales.AsNoTracking()
             .Where(x => x.UserId == userId && x.Date >= trendStart && x.Date < end).ToListAsync();
         var trendExpenses = await db.BarbershopExpenses.AsNoTracking()
-            .Where(x => x.UserId == userId && x.Date >= trendStart && x.Date < end && x.Paid).ToListAsync();
+            .Where(x => x.UserId == userId && x.Date >= trendStart && x.Date < end).ToListAsync();
 
         var trend = Enumerable.Range(0, 6).Select(i =>
         {
             var m = trendStart.AddMonths(i);
+            var monthExpenses = trendExpenses
+                .Where(x => x.Date.Year == m.Year && x.Date.Month == m.Month);
+
+            var expenseAmount = m >= currentMonth
+                ? monthExpenses.Sum(x => x.Amount)
+                : monthExpenses.Where(x => x.Paid).Sum(x => x.Amount);
+
             return new MonthlyPoint(
                 m.Year, m.Month,
                 trendSales.Where(x => x.Date.Year == m.Year && x.Date.Month == m.Month).Sum(x => x.Amount),
-                trendExpenses.Where(x => x.Date.Year == m.Year && x.Date.Month == m.Month).Sum(x => x.Amount)
+                expenseAmount
             );
         }).ToList();
 
@@ -92,13 +104,13 @@ public class DashboardController(
         else if (revenue == 0)
             insight = "Ainda não há vendas neste período. Registre vendas para ativar ticket médio, projeção, mix de serviços e margem.";
         else
-            insight = $"A margem operacional do período está em {(revenue == 0 ? 0 : (revenue - paidExpenses) / revenue * 100):N1}%.";
+            insight = $"A margem operacional do período está em {(revenue == 0 ? 0 : (revenue - expenseTotal) / revenue * 100):N1}%.";
 
         return View(new BarbershopDashboardViewModel
         {
             Month = selected,
             Revenue = revenue,
-            Expenses = paidExpenses,
+            Expenses = expenseTotal,
             SalesCount = count,
             ProjectedRevenue = projection,
             TargetRevenue = target,
