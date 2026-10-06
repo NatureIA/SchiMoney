@@ -38,9 +38,9 @@ public static class DbInitializer
         if (!await db.BarbershopServices.AnyAsync(x => x.UserId == user.Id))
         {
             db.BarbershopServices.AddRange(
-                new BarbershopService { UserId = user.Id, Name = "Corte", Price = 45 },
-                new BarbershopService { UserId = user.Id, Name = "Barba", Price = 30 },
-                new BarbershopService { UserId = user.Id, Name = "Corte + Barba", Price = 65 }
+                new BarbershopService { UserId = user.Id, Name = "Corte", Price = 0 },
+                new BarbershopService { UserId = user.Id, Name = "Barba", Price = 0 },
+                new BarbershopService { UserId = user.Id, Name = "Corte + Barba", Price = 0 }
             );
             await db.SaveChangesAsync();
         }

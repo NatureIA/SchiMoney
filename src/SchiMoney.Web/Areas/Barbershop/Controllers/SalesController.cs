@@ -108,7 +108,7 @@ public class SalesController(
         }
 
         model.UserId = UserId;
-        await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
+        await EnsureServiceCatalogAsync(model.ServiceName);
 
         await using var transaction = await db.Database.BeginTransactionAsync();
 
@@ -214,7 +214,7 @@ public class SalesController(
             return View(model);
         }
 
-        await EnsureServiceCatalogAsync(model.ServiceName, model.Amount);
+        await EnsureServiceCatalogAsync(model.ServiceName);
 
         if (item.RecurringSeriesId.HasValue)
         {
@@ -352,8 +352,7 @@ public class SalesController(
     }
 
     private async Task EnsureServiceCatalogAsync(
-        string serviceName,
-        decimal saleAmount)
+        string serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return;
@@ -378,7 +377,7 @@ public class SalesController(
         {
             UserId = UserId,
             Name = serviceName.Trim(),
-            Price = saleAmount,
+            Price = 0,
             Active = true
         });
     }
