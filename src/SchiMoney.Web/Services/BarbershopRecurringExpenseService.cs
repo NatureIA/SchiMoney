@@ -6,13 +6,18 @@ namespace SchiMoney.Web.Services;
 
 public class BarbershopRecurringExpenseService(AppDbContext db)
 {
-    public async Task EnsureCurrentOccurrencesAsync(string userId)
+    public async Task EnsureCurrentOccurrencesAsync(
+        string userId,
+        DateTime? throughDate = null)
     {
-        var today = DateTime.Today;
-        var currentMonth = new DateTime(today.Year, today.Month, 1);
+        var target = throughDate ?? DateTime.Today;
+        var targetMonth = new DateTime(target.Year, target.Month, 1);
+        var targetExclusive = targetMonth.AddMonths(1);
 
         var series = await db.BarbershopRecurringExpenses
-            .Where(x => x.UserId == userId && x.StartDate <= today)
+            .Where(x =>
+                x.UserId == userId &&
+                x.StartDate < targetExclusive)
             .OrderBy(x => x.StartDate)
             .ToListAsync();
 
@@ -43,12 +48,19 @@ public class BarbershopRecurringExpenseService(AppDbContext db)
 
         foreach (var item in series)
         {
-            var startMonth = new DateTime(item.StartDate.Year, item.StartDate.Month, 1);
-            var lastMonth = currentMonth;
+            var startMonth = new DateTime(
+                item.StartDate.Year,
+                item.StartDate.Month,
+                1);
+
+            var lastMonth = targetMonth;
 
             if (item.EndDate.HasValue)
             {
-                var endMonth = new DateTime(item.EndDate.Value.Year, item.EndDate.Value.Month, 1);
+                var endMonth = new DateTime(
+                    item.EndDate.Value.Year,
+                    item.EndDate.Value.Month,
+                    1);
 
                 if (endMonth < lastMonth)
                     lastMonth = endMonth;
@@ -65,7 +77,9 @@ public class BarbershopRecurringExpenseService(AppDbContext db)
                 if (existing.Contains(uniqueKey))
                     continue;
 
-                var day = Math.Min(item.StartDate.Day, DateTime.DaysInMonth(month.Year, month.Month));
+                var day = Math.Min(
+                    item.StartDate.Day,
+                    DateTime.DaysInMonth(month.Year, month.Month));
 
                 db.BarbershopExpenses.Add(new BarbershopExpense
                 {
@@ -92,7 +106,9 @@ public class BarbershopRecurringExpenseService(AppDbContext db)
             await db.SaveChangesAsync();
     }
 
-    public Task<BarbershopRecurringExpense?> GetSeriesAsync(int seriesId, string userId) =>
+    public Task<BarbershopRecurringExpense?> GetSeriesAsync(
+        int seriesId,
+        string userId) =>
         db.BarbershopRecurringExpenses
             .FirstOrDefaultAsync(x => x.Id == seriesId && x.UserId == userId);
 
@@ -104,8 +120,20 @@ public class BarbershopRecurringExpenseService(AppDbContext db)
         if (series is null || !series.Active)
             return;
 
+        var today = DateTime.Today;
+
+        var futureOccurrences = await db.BarbershopExpenses
+            .Where(x =>
+                x.UserId == userId &&
+                x.RecurringSeriesId == seriesId &&
+                x.Date > today)
+            .ToListAsync();
+
+        if (futureOccurrences.Count > 0)
+            db.BarbershopExpenses.RemoveRange(futureOccurrences);
+
         series.Active = false;
-        series.EndDate = DateTime.Today;
+        series.EndDate = today;
         series.UpdatedAt = DateTime.UtcNow;
 
         db.AuditLogs.Add(new AuditLog

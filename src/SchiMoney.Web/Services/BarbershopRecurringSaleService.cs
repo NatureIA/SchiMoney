@@ -6,13 +6,18 @@ namespace SchiMoney.Web.Services;
 
 public class BarbershopRecurringSaleService(AppDbContext db)
 {
-    public async Task EnsureCurrentOccurrencesAsync(string userId)
+    public async Task EnsureCurrentOccurrencesAsync(
+        string userId,
+        DateTime? throughDate = null)
     {
-        var today = DateTime.Today;
-        var currentMonth = new DateTime(today.Year, today.Month, 1);
+        var target = throughDate ?? DateTime.Today;
+        var targetMonth = new DateTime(target.Year, target.Month, 1);
+        var targetExclusive = targetMonth.AddMonths(1);
 
         var series = await db.BarbershopRecurringSales
-            .Where(x => x.UserId == userId && x.StartDate <= today)
+            .Where(x =>
+                x.UserId == userId &&
+                x.StartDate < targetExclusive)
             .OrderBy(x => x.StartDate)
             .ToListAsync();
 
@@ -23,10 +28,11 @@ public class BarbershopRecurringSaleService(AppDbContext db)
 
         var existingRows = await db.BarbershopSales
             .AsNoTracking()
-            .Where(x => x.UserId == userId &&
-                        x.RecurringSeriesId.HasValue &&
-                        seriesIds.Contains(x.RecurringSeriesId.Value) &&
-                        x.RecurringOccurrenceKey != null)
+            .Where(x =>
+                x.UserId == userId &&
+                x.RecurringSeriesId.HasValue &&
+                seriesIds.Contains(x.RecurringSeriesId.Value) &&
+                x.RecurringOccurrenceKey != null)
             .Select(x => new
             {
                 SeriesId = x.RecurringSeriesId!.Value,
@@ -38,10 +44,16 @@ public class BarbershopRecurringSaleService(AppDbContext db)
             .Select(x => $"{x.SeriesId}:{x.OccurrenceKey}")
             .ToHashSet();
 
+        var addedAny = false;
+
         foreach (var recurring in series)
         {
-            var startMonth = new DateTime(recurring.StartDate.Year, recurring.StartDate.Month, 1);
-            var lastMonth = currentMonth;
+            var startMonth = new DateTime(
+                recurring.StartDate.Year,
+                recurring.StartDate.Month,
+                1);
+
+            var lastMonth = targetMonth;
 
             if (recurring.EndDate.HasValue)
             {
@@ -83,14 +95,17 @@ public class BarbershopRecurringSaleService(AppDbContext db)
                 });
 
                 existingKeys.Add(key);
+                addedAny = true;
             }
         }
 
-        if (db.ChangeTracker.HasChanges())
+        if (addedAny)
             await db.SaveChangesAsync();
     }
 
-    public Task<BarbershopRecurringSale?> GetSeriesAsync(int seriesId, string userId) =>
+    public Task<BarbershopRecurringSale?> GetSeriesAsync(
+        int seriesId,
+        string userId) =>
         db.BarbershopRecurringSales
             .FirstOrDefaultAsync(x => x.Id == seriesId && x.UserId == userId);
 
@@ -102,8 +117,20 @@ public class BarbershopRecurringSaleService(AppDbContext db)
         if (recurring is null || !recurring.Active)
             return;
 
+        var today = DateTime.Today;
+
+        var futureOccurrences = await db.BarbershopSales
+            .Where(x =>
+                x.UserId == userId &&
+                x.RecurringSeriesId == seriesId &&
+                x.Date > today)
+            .ToListAsync();
+
+        if (futureOccurrences.Count > 0)
+            db.BarbershopSales.RemoveRange(futureOccurrences);
+
         recurring.Active = false;
-        recurring.EndDate = DateTime.Today;
+        recurring.EndDate = today;
         recurring.UpdatedAt = DateTime.UtcNow;
 
         db.AuditLogs.Add(new AuditLog

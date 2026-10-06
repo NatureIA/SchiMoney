@@ -37,7 +37,19 @@ public class ExpensesController(
         int? year = null,
         int? month = null)
     {
-        await recurringExpenses.EnsureCurrentOccurrencesAsync(UserId);
+        DateTime? projectionThrough = null;
+
+        if (year.HasValue || month.HasValue)
+        {
+            projectionThrough = new DateTime(
+                year ?? DateTime.Today.Year,
+                month ?? (year.HasValue ? 12 : DateTime.Today.Month),
+                1);
+        }
+
+        await recurringExpenses.EnsureCurrentOccurrencesAsync(
+            UserId,
+            projectionThrough);
 
         var query = db.BarbershopExpenses.AsNoTracking().Where(x => x.UserId == UserId);
 
@@ -159,8 +171,6 @@ public class ExpensesController(
                     ? firstBoletoDate!.Value.Date
                     : DateTime.Today;
 
-            await using var transaction = await db.Database.BeginTransactionAsync();
-
             var recurring = new BarbershopRecurringExpense
             {
                 UserId = UserId,
@@ -203,7 +213,6 @@ public class ExpensesController(
             });
 
             await db.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return RedirectToAction(nameof(Index));
         }

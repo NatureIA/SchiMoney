@@ -17,10 +17,13 @@ public class DashboardController(
     public async Task<IActionResult> Index(int? year = null, int? month = null)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        await recurringSales.EnsureCurrentOccurrencesAsync(userId);
-        await recurringExpenses.EnsureCurrentOccurrencesAsync(userId);
+        var selected = new DateTime(
+            year ?? DateTime.Today.Year,
+            month ?? DateTime.Today.Month,
+            1);
 
-        var selected = new DateTime(year ?? DateTime.Today.Year, month ?? DateTime.Today.Month, 1);
+        await recurringSales.EnsureCurrentOccurrencesAsync(userId, selected);
+        await recurringExpenses.EnsureCurrentOccurrencesAsync(userId, selected);
         var start = selected;
         var end = start.AddMonths(1);
 

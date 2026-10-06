@@ -29,7 +29,19 @@ public class SalesController(
         int? year = null,
         int? month = null)
     {
-        await recurringSales.EnsureCurrentOccurrencesAsync(UserId);
+        DateTime? projectionThrough = null;
+
+        if (year.HasValue || month.HasValue)
+        {
+            projectionThrough = new DateTime(
+                year ?? DateTime.Today.Year,
+                month ?? (year.HasValue ? 12 : DateTime.Today.Month),
+                1);
+        }
+
+        await recurringSales.EnsureCurrentOccurrencesAsync(
+            UserId,
+            projectionThrough);
 
         var query = db.BarbershopSales
             .AsNoTracking()
