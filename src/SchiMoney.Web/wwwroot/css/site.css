@@ -31,3 +31,8 @@
 .inline-update{display:flex;gap:7px;margin-top:8px}.inline-update input{border:1px solid var(--line);border-radius:9px;padding:7px 9px;min-width:0}
 @media(max-width:1100px){.filter-panel{grid-template-columns:1fr 1fr 1fr}.filter-panel .filter-clear{min-height:36px}.three-metrics{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:760px){.period-toolbar{flex-wrap:wrap}.period-toolbar>div{min-width:140px}.period-cta{width:100%;margin-left:0}.filter-panel{grid-template-columns:1fr 1fr}.filter-panel input:first-child{grid-column:1/-1}.trend-chart{height:180px}.three-metrics{grid-template-columns:1fr}.service-editor{align-items:stretch;flex-direction:column}.service-editor-fields{grid-template-columns:1fr;width:100%}.service-editor-actions{width:100%;flex-wrap:wrap}.actions-cell{white-space:normal}}
+
+.pwa-install-button{position:fixed;right:18px;bottom:18px;z-index:80;border:0;border-radius:999px;background:#111513;color:#fff;padding:11px 16px;font-size:12px;font-weight:760;box-shadow:0 12px 30px rgba(10,14,12,.24)}
+.pwa-install-button:hover{background:#202622}
+@media(display-mode:standalone){.pwa-install-button{display:none!important}}
+@media(max-width:760px){.pwa-install-button{right:14px;bottom:calc(14px + env(safe-area-inset-bottom));padding:10px 14px}}
