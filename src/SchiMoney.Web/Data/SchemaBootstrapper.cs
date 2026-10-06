@@ -74,9 +74,49 @@ BEGIN
         [Date] datetime2 NOT NULL,
         [CustomerName] nvarchar(120) NULL,
         [Notes] nvarchar(500) NULL,
+        [RecurringSeriesId] int NULL,
+        [RecurringOccurrenceKey] nvarchar(7) NULL,
         [CreatedAt] datetime2 NOT NULL
     );
     CREATE INDEX [IX_BarbershopSales_UserId_Date] ON [BarbershopSales]([UserId],[Date]);
+END;
+
+IF COL_LENGTH('BarbershopSales', 'RecurringSeriesId') IS NULL
+    ALTER TABLE [BarbershopSales] ADD [RecurringSeriesId] int NULL;
+
+IF COL_LENGTH('BarbershopSales', 'RecurringOccurrenceKey') IS NULL
+    ALTER TABLE [BarbershopSales] ADD [RecurringOccurrenceKey] nvarchar(7) NULL;
+
+IF OBJECT_ID(N'[BarbershopRecurringSales]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [BarbershopRecurringSales](
+        [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [UserId] nvarchar(450) NOT NULL,
+        [ServiceName] nvarchar(120) NOT NULL,
+        [Amount] decimal(18,2) NOT NULL,
+        [PaymentMethod] nvarchar(30) NOT NULL,
+        [CustomerName] nvarchar(120) NULL,
+        [Notes] nvarchar(500) NULL,
+        [StartDate] datetime2 NOT NULL,
+        [EndDate] datetime2 NULL,
+        [Active] bit NOT NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [UpdatedAt] datetime2 NOT NULL
+    );
+    CREATE INDEX [IX_BarbershopRecurringSales_UserId_Active]
+        ON [BarbershopRecurringSales]([UserId],[Active]);
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_BarbershopSales_RecurringOccurrence'
+      AND object_id = OBJECT_ID('BarbershopSales')
+)
+BEGIN
+    CREATE UNIQUE INDEX [UX_BarbershopSales_RecurringOccurrence]
+        ON [BarbershopSales]([RecurringSeriesId],[RecurringOccurrenceKey])
+        WHERE [RecurringSeriesId] IS NOT NULL AND [RecurringOccurrenceKey] IS NOT NULL;
 END;
 
 IF OBJECT_ID(N'[BarbershopExpenses]', N'U') IS NULL
