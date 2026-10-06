@@ -1,13 +1,20 @@
 @model List<BarbershopExpense>
 @{
     ViewData["Title"] = "Despesas";
+    var categories = ViewBag.Categories as List<string> ?? [];
 }
 <div class="page-actions"><p class="page-intro">Custos fixos, variáveis, pagos e pendentes da Barbearia.</p><a class="primary-btn" asp-action="Create">+ Nova despesa</a></div>
 
 <form method="get" class="filter-panel">
 <input name="q" value="@ViewBag.Q" placeholder="Buscar descrição..." />
 <select name="status"><option value="">Todos os status</option><option value="Pago" selected="@(ViewBag.Status=="Pago" ? "selected" : null)">Pago</option><option value="Pendente" selected="@(ViewBag.Status=="Pendente" ? "selected" : null)">Pendente</option></select>
-<select name="category"><option value="">Todas as categorias</option><option>Aluguel</option><option>Água</option><option>Energia</option><option>Internet</option><option>Produtos</option><option>Materiais</option><option>Marketing</option><option>Impostos</option><option>Manutenção</option><option>Equipamentos</option><option>Taxas</option><option>Outros</option></select>
+<select name="category">
+    <option value="">Todas as categorias</option>
+    @foreach (var category in categories)
+    {
+        <option value="@category" selected="@(ViewBag.Category == category ? "selected" : null)">@category</option>
+    }
+</select>
 <input name="month" type="number" min="1" max="12" value="@ViewBag.Month" placeholder="Mês" />
 <input name="year" type="number" min="2020" max="2100" value="@ViewBag.Year" placeholder="Ano" />
 <button class="secondary-btn" type="submit">Filtrar</button><a class="filter-clear" asp-action="Index">Limpar</a>

@@ -61,4 +61,29 @@
 
     service?.addEventListener("change", () => refreshService(true));
     refreshService(false);
+
+    const expenseCategory = document.querySelector("[data-expense-category]");
+    const newExpenseCategoryBlock = document.querySelector("[data-new-expense-category-block]");
+    const newExpenseCategoryName = document.querySelector("[data-new-expense-category-name]");
+
+    const refreshExpenseCategory = () => {
+        if (!expenseCategory) return;
+
+        const isNew = expenseCategory.value === "__new__";
+
+        if (newExpenseCategoryBlock) {
+            newExpenseCategoryBlock.hidden = !isNew;
+        }
+
+        if (newExpenseCategoryName) {
+            newExpenseCategoryName.required = isNew;
+
+            if (!isNew) {
+                newExpenseCategoryName.value = "";
+            }
+        }
+    };
+
+    expenseCategory?.addEventListener("change", refreshExpenseCategory);
+    refreshExpenseCategory();
 })();

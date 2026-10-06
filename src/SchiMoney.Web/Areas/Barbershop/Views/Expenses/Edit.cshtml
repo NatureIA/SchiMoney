@@ -1,14 +1,54 @@
 @model BarbershopExpense
 @{
     ViewData["Title"] = "Editar despesa";
+    var categories = ViewBag.Categories as List<string> ?? [];
+    var newCategoryName = ViewBag.NewCategoryName as string ?? string.Empty;
 }
 <div class="form-shell">
 <div class="form-heading"><span class="eyebrow">Barbearia</span><h2>Editar despesa</h2><p>Atualize esta ocorrência financeira.</p></div>
 <form method="post" class="smart-form">
 <div asp-validation-summary="ModelOnly" class="validation"></div>
-<div class="field-grid two"><label><span>Descrição</span><input asp-for="Description" required /></label><label><span>Valor</span><input asp-for="Amount" type="number" step="0.01" min="0.01" required /></label></div>
-<div class="field-grid two"><label><span>Categoria</span><select asp-for="Category"><option>Aluguel</option><option>Água</option><option>Energia</option><option>Internet</option><option>Produtos</option><option>Materiais</option><option>Marketing</option><option>Impostos</option><option>Manutenção</option><option>Equipamentos</option><option>Taxas</option><option>Outros</option></select></label><label><span>Tipo</span><select asp-for="ExpenseType"><option>Fixa</option><option>Variável</option></select></label></div>
-<div class="field-grid three"><label><span>Data</span><input asp-for="Date" type="date" /></label><label><span>Vencimento</span><input asp-for="DueDate" type="date" /></label><label><span>Pagamento</span><select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Transferência</option></select></label></div>
-<label class="check-row"><input asp-for="Paid" /><span>Despesa paga</span></label><label><span>Observações</span><textarea asp-for="Notes" rows="3"></textarea></label>
+
+<div class="field-grid two">
+<label><span>Descrição</span><input asp-for="Description" required /></label>
+<label><span>Valor</span><input asp-for="Amount" type="number" step="0.01" min="0.01" required /></label>
+</div>
+
+<div class="field-grid two">
+<label>
+    <span>Categoria</span>
+    <select asp-for="Category" data-expense-category>
+        @foreach (var category in categories)
+        {
+            <option value="@category">@category</option>
+        }
+        <option value="__new__">+ Criar nova categoria</option>
+    </select>
+    <span asp-validation-for="Category" class="validation"></span>
+</label>
+<label><span>Tipo</span><select asp-for="ExpenseType"><option>Fixa</option><option>Variável</option></select></label>
+</div>
+
+<div data-new-expense-category-block hidden>
+    <label>
+        <span>Nome da nova categoria</span>
+        <input type="text"
+               name="newCategoryName"
+               value="@newCategoryName"
+               maxlength="80"
+               data-new-expense-category-name
+               placeholder="Ex.: Funcionários, Contabilidade, Limpeza..." />
+        <small>Depois de salvar, essa categoria ficará disponível nas próximas despesas.</small>
+    </label>
+</div>
+
+<div class="field-grid three">
+<label><span>Data</span><input asp-for="Date" type="date" /></label>
+<label><span>Vencimento</span><input asp-for="DueDate" type="date" /></label>
+<label><span>Pagamento</span><select asp-for="PaymentMethod"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Boleto</option><option>Transferência</option></select></label>
+</div>
+
+<label class="check-row"><input asp-for="Paid" /><span>Despesa paga</span></label>
+<label><span>Observações</span><textarea asp-for="Notes" rows="3"></textarea></label>
 <div class="form-actions"><a class="secondary-btn" asp-action="Index">Cancelar</a><button class="primary-btn" type="submit">Salvar alterações</button></div>
 </form></div>
