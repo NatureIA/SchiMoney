@@ -138,5 +138,61 @@ END;
 """;
 
         await db.Database.ExecuteSqlRawAsync(sql);
+
+        var recurringStructureSql = """
+IF OBJECT_ID(N'[BarbershopRecurringSales]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [BarbershopRecurringSales](
+        [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [UserId] nvarchar(450) NOT NULL,
+        [ServiceName] nvarchar(120) NOT NULL,
+        [Amount] decimal(18,2) NOT NULL,
+        [PaymentMethod] nvarchar(30) NOT NULL,
+        [CustomerName] nvarchar(120) NULL,
+        [Notes] nvarchar(500) NULL,
+        [StartDate] datetime2 NOT NULL,
+        [EndDate] datetime2 NULL,
+        [Active] bit NOT NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [UpdatedAt] datetime2 NOT NULL
+    );
+END;
+
+IF COL_LENGTH('BarbershopSales', 'RecurringSeriesId') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopSales] ADD [RecurringSeriesId] int NULL;
+END;
+
+IF COL_LENGTH('BarbershopSales', 'RecurringOccurrenceKey') IS NULL
+BEGIN
+    ALTER TABLE [BarbershopSales] ADD [RecurringOccurrenceKey] nvarchar(7) NULL;
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(recurringStructureSql);
+
+        var recurringIndexesSql = """
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_BarbershopRecurringSales_UserId_Active'
+      AND object_id = OBJECT_ID('BarbershopRecurringSales')
+)
+BEGIN
+    CREATE INDEX [IX_BarbershopRecurringSales_UserId_Active]
+        ON [BarbershopRecurringSales]([UserId], [Active]);
+END;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'IX_BarbershopSales_RecurringSeriesId_RecurringOccurrenceKey'
+      AND object_id = OBJECT_ID('BarbershopSales')
+)
+BEGIN
+    CREATE INDEX [IX_BarbershopSales_RecurringSeriesId_RecurringOccurrenceKey]
+        ON [BarbershopSales]([RecurringSeriesId], [RecurringOccurrenceKey]);
+END;
+""";
+
+        await db.Database.ExecuteSqlRawAsync(recurringIndexesSql);
     }
 }

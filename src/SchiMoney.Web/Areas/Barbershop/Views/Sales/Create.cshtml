@@ -3,6 +3,7 @@
     ViewData["Title"] = "Registrar venda";
     var services = ViewBag.Services as List<BarbershopService> ?? [];
     var newServiceName = ViewBag.NewServiceName as string ?? string.Empty;
+    var isRecurring = ViewBag.IsRecurring == true;
 }
 <div class="form-shell">
 <div class="form-heading">
@@ -23,9 +24,7 @@
         {
             if (s.Price > 0)
             {
-                <option value="@s.Name" data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-                    @s.Name
-                </option>
+                <option value="@s.Name" data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">@s.Name</option>
             }
             else
             {
@@ -73,6 +72,21 @@
     <input asp-for="CustomerName" placeholder="Opcional" />
 </label>
 </div>
+
+<label class="check-row">
+    @if (isRecurring)
+    {
+        <input type="checkbox" name="isRecurring" value="true" checked />
+    }
+    else
+    {
+        <input type="checkbox" name="isRecurring" value="true" />
+    }
+    <span>
+        <strong>Venda recorrente</strong><br />
+        <small>Repete automaticamente todos os meses até você encerrar a recorrência.</small>
+    </span>
+</label>
 
 <label>
     <span>Observações</span>
