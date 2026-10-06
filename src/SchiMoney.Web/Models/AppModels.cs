@@ -66,25 +66,7 @@ public class BarbershopSale
     [DataType(DataType.Date)] public DateTime Date { get; set; } = DateTime.Today;
     [MaxLength(120)] public string? CustomerName { get; set; }
     [MaxLength(500)] public string? Notes { get; set; }
-    public int? RecurringSeriesId { get; set; }
-    [MaxLength(7)] public string? RecurringOccurrenceKey { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
-
-public class BarbershopRecurringSale
-{
-    public int Id { get; set; }
-    [Required] public string UserId { get; set; } = string.Empty;
-    [Required, MaxLength(120)] public string ServiceName { get; set; } = string.Empty;
-    [Range(0.01, 999999999)] public decimal Amount { get; set; }
-    [Required, MaxLength(30)] public string PaymentMethod { get; set; } = "Pix";
-    [MaxLength(120)] public string? CustomerName { get; set; }
-    [MaxLength(500)] public string? Notes { get; set; }
-    [DataType(DataType.Date)] public DateTime StartDate { get; set; } = DateTime.Today;
-    [DataType(DataType.Date)] public DateTime? EndDate { get; set; }
-    public bool Active { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class BarbershopExpense
