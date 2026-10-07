@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SchiMoney.Web.Data;
@@ -35,6 +36,13 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<BarbershopRecurringSaleService>();
 builder.Services.AddScoped<BarbershopRecurringExpenseService>();
@@ -57,6 +65,21 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/erro");
     app.UseHsts();
 }
+
+app.UseForwardedHeaders();
+
+app.Use(async (context, next) =>
+{
+    if (!context.Request.IsHttps)
+    {
+        var host = context.Request.Host;
+        var target = $"https://{host}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+        context.Response.Redirect(target, permanent: true);
+        return;
+    }
+
+    await next();
+});
 
 app.UseHttpsRedirection();
 
