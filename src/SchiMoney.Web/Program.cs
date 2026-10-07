@@ -71,9 +71,17 @@ app.UseStaticFiles(new StaticFileOptions
         var path = context.Context.Request.Path.Value ?? "";
 
         if (path.EndsWith("manifest.webmanifest", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith("manifest.json", StringComparison.OrdinalIgnoreCase) ||
             path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
         {
             context.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            context.Context.Response.Headers.Pragma = "no-cache";
+            context.Context.Response.Headers.Expires = "0";
+        }
+
+        if (path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Context.Response.Headers["Service-Worker-Allowed"] = "/";
         }
     }
 });
