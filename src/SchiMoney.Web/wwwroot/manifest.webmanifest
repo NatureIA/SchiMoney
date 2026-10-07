@@ -4,7 +4,7 @@
   "short_name": "SchiMoney",
   "description": "Gestão financeira pessoal e da barbearia.",
   "lang": "pt-BR",
-  "start_url": "/conta/entrar?pwa=1",
+  "start_url": "/conta/entrar",
   "scope": "/",
   "display": "standalone",
   "display_override": [

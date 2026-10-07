@@ -86,12 +86,12 @@ jobs:
         run: |
           $base = "https://schimoney.runasp.net"
           $assets = @(
-            "/pwa-manifest",
+            "/manifest.webmanifest",
             "/service-worker.js",
             "/icons/icon-192.png",
             "/icons/icon-512.png",
             "/offline.html",
-            "/conta/entrar?pwa=1"
+            "/conta/entrar"
           )
 
           foreach ($asset in $assets) {
@@ -103,24 +103,38 @@ jobs:
             }
           }
 
-          $manifest = Invoke-WebRequest -Uri "$base/pwa-manifest" -UseBasicParsing -TimeoutSec 20
-          Write-Host "PWA manifest raw response:"
-          Write-Host $manifest.Content
-          $manifestBody = $manifest.Content | ConvertFrom-Json
+          $manifestResponse = Invoke-WebRequest -Uri "$base/manifest.webmanifest" -UseBasicParsing -TimeoutSec 20
+          $manifestText = if ($manifestResponse.Content -is [byte[]]) {
+            [System.Text.Encoding]::UTF8.GetString($manifestResponse.Content)
+          } else {
+            [string]$manifestResponse.Content
+          }
+          $manifestBody = $manifestText | ConvertFrom-Json
 
-          if ($manifest.StatusCode -ne 200) { throw "Manifest não respondeu 200." }
-          if ($manifest.Headers["Content-Type"] -notlike "application/manifest+json*") { throw "Manifest dinâmico com MIME incorreto: $($manifest.Headers["Content-Type"])" }
+          if ($manifestResponse.StatusCode -ne 200) { throw "Manifest não respondeu 200." }
+          if ($manifestResponse.Headers["Content-Type"] -notlike "application/manifest+json*") {
+            throw "Manifest com MIME incorreto: $($manifestResponse.Headers["Content-Type"])"
+          }
           if ($manifestBody.name -ne "SchiMoney") { throw "Manifest sem nome válido." }
+          if ($manifestBody.short_name -ne "SchiMoney") { throw "Manifest sem short_name válido." }
+          if ($manifestBody.id -ne "/") { throw "Manifest com id inválido." }
+          if ($manifestBody.start_url -ne "/conta/entrar") { throw "Manifest com start_url inválido." }
+          if ($manifestBody.scope -ne "/") { throw "Manifest com scope inválido." }
           if ($manifestBody.display -ne "standalone") { throw "Manifest sem display standalone." }
-          if ($manifestBody.start_url -ne "/conta/entrar?pwa=1") { throw "Manifest com start_url inesperado." }
-          if ($manifestBody.prefer_related_applications -ne $false) { throw "Manifest com prefer_related_applications inválido." }
+          if ($manifestBody.prefer_related_applications -ne $false) { throw "prefer_related_applications inválido." }
           if (-not $manifestBody.icons -or $manifestBody.icons.Count -lt 2) { throw "Manifest sem ícones obrigatórios." }
 
-          $start = Invoke-WebRequest -Uri "$base/conta/entrar?pwa=1" -UseBasicParsing -TimeoutSec 20
-          if ($start.StatusCode -ne 200) { throw "start_url não respondeu HTTP 200 sem sessão." }
-
-          $worker = Invoke-WebRequest -Uri "$base/service-worker.js?v=7" -UseBasicParsing -TimeoutSec 20
+          $worker = Invoke-WebRequest -Uri "$base/service-worker.js" -UseBasicParsing -TimeoutSec 20
           if ($worker.StatusCode -ne 200) { throw "Service worker indisponível." }
-          if ($worker.Headers["Service-Worker-Allowed"] -ne "/") { throw "Service-Worker-Allowed não está configurado para /." }
 
-          Write-Host "PWA validado: HTTPS, manifest, start_url, service worker e ícones prontos."
+          $home = Invoke-WebRequest -Uri "$base/conta/entrar" -UseBasicParsing -TimeoutSec 20
+          $homeText = if ($home.Content -is [byte[]]) {
+            [System.Text.Encoding]::UTF8.GetString($home.Content)
+          } else {
+            [string]$home.Content
+          }
+          if ($homeText -notmatch 'rel="manifest" href="/manifest.webmanifest"') {
+            throw "Página de entrada não referencia manifest.webmanifest."
+          }
+
+          Write-Host "PWA validado no padrão ROUTINE: HTTPS, manifest, MIME, start_url, scope, ícones e service worker."

@@ -69,24 +69,10 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = context =>
     {
         var path = context.Context.Request.Path.Value ?? "";
-
         if (path.EndsWith("manifest.webmanifest", StringComparison.OrdinalIgnoreCase) ||
-            path.EndsWith("manifest.json", StringComparison.OrdinalIgnoreCase) ||
             path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
         {
             context.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
-            context.Context.Response.Headers.Pragma = "no-cache";
-            context.Context.Response.Headers.Expires = "0";
-        }
-
-        if (path.EndsWith("manifest.json", StringComparison.OrdinalIgnoreCase))
-        {
-            context.Context.Response.ContentType = "application/manifest+json; charset=utf-8";
-        }
-
-        if (path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
-        {
-            context.Context.Response.Headers["Service-Worker-Allowed"] = "/";
         }
     }
 });
@@ -94,49 +80,6 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapGet("/pwa-manifest", () =>
-{
-    const string manifest = """
-{
-  "id": "/",
-  "name": "SchiMoney",
-  "short_name": "SchiMoney",
-  "description": "Gestão financeira pessoal e da barbearia.",
-  "lang": "pt-BR",
-  "start_url": "/conta/entrar?pwa=1",
-  "scope": "/",
-  "display": "standalone",
-  "display_override": ["standalone"],
-  "background_color": "#f4f5f3",
-  "theme_color": "#0e1110",
-  "prefer_related_applications": false,
-  "categories": ["finance", "business", "productivity"],
-  "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
-}
-""";
-
-    return Results.Text(manifest, "application/manifest+json");
-});
 
 app.MapGet("/health", async (AppDbContext db) =>
 {
