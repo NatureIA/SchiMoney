@@ -91,8 +91,7 @@ jobs:
             "/icons/icon-192.png",
             "/icons/icon-512.png",
             "/offline.html",
-            "/pwa-start.html",
-            "/instalar.html"
+            "/conta/entrar"
           )
 
           foreach ($asset in $assets) {
@@ -118,8 +117,8 @@ jobs:
           }
           if ($manifestBody.name -ne "SchiMoney") { throw "Manifest sem nome válido." }
           if ($manifestBody.short_name -ne "SchiMoney") { throw "Manifest sem short_name válido." }
-          if ($manifestBody.id -ne "/schimoney-pwa") { throw "Manifest com id inválido." }
-          if ($manifestBody.start_url -ne "/pwa-start.html") { throw "Manifest com start_url inválido." }
+          if ($manifestBody.id -ne "/") { throw "Manifest com id inválido." }
+          if ($manifestBody.start_url -ne "/") { throw "Manifest com start_url inválido." }
           if ($manifestBody.scope -ne "/") { throw "Manifest com scope inválido." }
           if ($manifestBody.display -ne "standalone") { throw "Manifest sem display standalone." }
           if ($manifestBody.prefer_related_applications -ne $false) { throw "prefer_related_applications inválido." }
@@ -128,15 +127,15 @@ jobs:
           $worker = Invoke-WebRequest -Uri "$base/service-worker.js" -UseBasicParsing -TimeoutSec 20
           if ($worker.StatusCode -ne 200) { throw "Service worker indisponível." }
 
-          $startPage = Invoke-WebRequest -Uri "$base/pwa-start.html" -UseBasicParsing -TimeoutSec 20
-          $startText = if ($startPage.Content -is [byte[]]) {
-            [System.Text.Encoding]::UTF8.GetString($startPage.Content)
+          $loginPage = Invoke-WebRequest -Uri "$base/conta/entrar" -UseBasicParsing -TimeoutSec 20
+          $loginText = if ($loginPage.Content -is [byte[]]) {
+            [System.Text.Encoding]::UTF8.GetString($loginPage.Content)
           } else {
-            [string]$startPage.Content
+            [string]$loginPage.Content
           }
-          if ($startPage.StatusCode -ne 200) { throw "pwa-start.html não respondeu 200." }
-          if ($startText -notmatch 'rel="manifest" href="/manifest.webmanifest"') {
-            throw "pwa-start.html não referencia manifest.webmanifest."
+          if ($loginPage.StatusCode -ne 200) { throw "Página de login não respondeu 200." }
+          if ($loginText -notmatch 'rel="manifest" href="/manifest.webmanifest"') {
+            throw "Página de login não referencia manifest.webmanifest."
           }
 
           Write-Host "PWA validado no padrão ROUTINE: HTTPS, manifest, MIME, start_url, scope, ícones e service worker."
