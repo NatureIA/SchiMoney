@@ -6,7 +6,7 @@ on:
 
 concurrency:
   group: schimoney-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
