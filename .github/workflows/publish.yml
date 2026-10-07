@@ -52,6 +52,23 @@ jobs:
           server-username: ${{ env.SERVER_USERNAME }}
           server-password: ${{ env.SERVER_PASSWORD }}
 
+      - name: Verify HTTP redirects to HTTPS
+        shell: pwsh
+        run: |
+          $httpUrl = "http://schimoney.runasp.net/"
+          $response = Invoke-WebRequest -Uri $httpUrl -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 20
+
+          if ($response.StatusCode -notin 301,302,307,308) {
+            throw "HTTP não está redirecionando para HTTPS. Status: $($response.StatusCode)"
+          }
+
+          $location = [string]$response.Headers["Location"]
+          if (-not $location.StartsWith("https://")) {
+            throw "Redirecionamento HTTP não aponta para HTTPS: $location"
+          }
+
+          Write-Host "HTTP -> HTTPS validado: $location"
+
       - name: Verify application and database automatically
         shell: pwsh
         run: |
