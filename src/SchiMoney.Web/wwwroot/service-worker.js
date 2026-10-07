@@ -1,10 +1,10 @@
-const CACHE_NAME = 'schimoney-static-v2';
+const CACHE_NAME = 'schimoney-static-v3';
 const STATIC_ASSETS = [
   '/offline.html',
   '/css/site.css',
   '/js/site.js',
   '/js/pwa.js',
-  '/manifest.webmanifest',
+  '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png'
@@ -53,7 +53,6 @@ self.addEventListener('fetch', event => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         }
-
         return response;
       })
       .catch(() => caches.match(request))
