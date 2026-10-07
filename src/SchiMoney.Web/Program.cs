@@ -95,6 +95,49 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/pwa-manifest", () =>
+{
+    const manifest = """
+{
+  "id": "/",
+  "name": "SchiMoney",
+  "short_name": "SchiMoney",
+  "description": "Gestão financeira pessoal e da barbearia.",
+  "lang": "pt-BR",
+  "start_url": "/conta/entrar?pwa=1",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "background_color": "#f4f5f3",
+  "theme_color": "#0e1110",
+  "prefer_related_applications": false,
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+""";
+
+    return Results.Text(manifest, "application/manifest+json");
+});
+
 app.MapGet("/health", async (AppDbContext db) =>
 {
     try
