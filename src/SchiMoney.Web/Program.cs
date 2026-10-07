@@ -79,6 +79,11 @@ app.UseStaticFiles(new StaticFileOptions
             context.Context.Response.Headers.Expires = "0";
         }
 
+        if (path.EndsWith("manifest.json", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Context.Response.ContentType = "application/manifest+json; charset=utf-8";
+        }
+
         if (path.EndsWith("service-worker.js", StringComparison.OrdinalIgnoreCase))
         {
             context.Context.Response.Headers["Service-Worker-Allowed"] = "/";
