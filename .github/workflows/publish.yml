@@ -86,11 +86,12 @@ jobs:
         run: |
           $base = "https://schimoney.runasp.net"
           $assets = @(
-            "/manifest.json",
+            "/manifest.webmanifest",
             "/service-worker.js",
             "/icons/icon-192.png",
             "/icons/icon-512.png",
-            "/offline.html"
+            "/offline.html",
+            "/conta/entrar?pwa=1"
           )
 
           foreach ($asset in $assets) {
@@ -102,12 +103,22 @@ jobs:
             }
           }
 
-          $manifest = Invoke-WebRequest -Uri "$base/manifest.json" -UseBasicParsing -TimeoutSec 20
+          $manifest = Invoke-WebRequest -Uri "$base/manifest.webmanifest" -UseBasicParsing -TimeoutSec 20
           $manifestBody = $manifest.Content | ConvertFrom-Json
 
+          if ($manifest.StatusCode -ne 200) { throw "Manifest não respondeu 200." }
+          if ($manifest.Headers["Content-Type"] -notlike "application/manifest+json*") { throw "Manifest com MIME incorreto: $($manifest.Headers["Content-Type"])" }
           if ($manifestBody.name -ne "SchiMoney") { throw "Manifest sem nome válido." }
           if ($manifestBody.display -ne "standalone") { throw "Manifest sem display standalone." }
-          if (-not $manifestBody.start_url) { throw "Manifest sem start_url." }
+          if ($manifestBody.start_url -ne "/conta/entrar?pwa=1") { throw "Manifest com start_url inesperado." }
+          if ($manifestBody.prefer_related_applications -ne $false) { throw "Manifest com prefer_related_applications inválido." }
           if (-not $manifestBody.icons -or $manifestBody.icons.Count -lt 2) { throw "Manifest sem ícones obrigatórios." }
 
-          Write-Host "PWA assets e manifest validados em HTTPS."
+          $start = Invoke-WebRequest -Uri "$base/conta/entrar?pwa=1" -UseBasicParsing -TimeoutSec 20
+          if ($start.StatusCode -ne 200) { throw "start_url não respondeu HTTP 200 sem sessão." }
+
+          $worker = Invoke-WebRequest -Uri "$base/service-worker.js?v=5" -UseBasicParsing -TimeoutSec 20
+          if ($worker.StatusCode -ne 200) { throw "Service worker indisponível." }
+          if ($worker.Headers["Service-Worker-Allowed"] -ne "/") { throw "Service-Worker-Allowed não está configurado para /." }
+
+          Write-Host "PWA validado: HTTPS, manifest, start_url, service worker e ícones prontos."
