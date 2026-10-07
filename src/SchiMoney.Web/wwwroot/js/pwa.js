@@ -11,7 +11,6 @@
 
   function ensureInstallButton() {
     if (installButton || isStandalone()) return;
-
     installButton = document.createElement('button');
     installButton.type = 'button';
     installButton.className = 'pwa-install';
@@ -21,7 +20,6 @@
 
     installButton.addEventListener('click', async () => {
       if (!deferredPrompt) return;
-
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
       deferredPrompt = null;
@@ -33,23 +31,16 @@
     event.preventDefault();
     deferredPrompt = event;
     ensureInstallButton();
-
-    if (installButton) {
-      installButton.hidden = false;
-    }
+    if (installButton) installButton.hidden = false;
   });
 
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
-
-    if (installButton) {
-      installButton.hidden = true;
-    }
+    if (installButton) installButton.hidden = true;
   });
 
   window.addEventListener('load', async () => {
     ensureInstallButton();
-
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
       registration.update();
