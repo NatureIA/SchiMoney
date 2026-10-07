@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schimoney-static-v10';
+const CACHE_NAME = 'schimoney-static-v11';
 const STATIC_ASSETS = [
   '/offline.html',
   '/css/site.css',
