@@ -14,7 +14,7 @@
     </section>
 
     <section class="auth-form-wrap">
-        <form class="auth-form" method="post">
+        <form class="auth-form" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
             <div>
                 <span class="eyebrow">Acesso seguro</span>
                 <h2>Bem-vindo de volta</h2>

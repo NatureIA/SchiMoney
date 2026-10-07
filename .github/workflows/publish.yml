@@ -91,7 +91,7 @@ jobs:
             "/icons/icon-192.png",
             "/icons/icon-512.png",
             "/offline.html",
-            "/conta/entrar"
+            "/"
           )
 
           foreach ($asset in $assets) {
@@ -127,15 +127,15 @@ jobs:
           $worker = Invoke-WebRequest -Uri "$base/service-worker.js" -UseBasicParsing -TimeoutSec 20
           if ($worker.StatusCode -ne 200) { throw "Service worker indisponível." }
 
-          $loginPage = Invoke-WebRequest -Uri "$base/conta/entrar" -UseBasicParsing -TimeoutSec 20
+          $loginPage = Invoke-WebRequest -Uri "$base/" -UseBasicParsing -TimeoutSec 20
           $loginText = if ($loginPage.Content -is [byte[]]) {
             [System.Text.Encoding]::UTF8.GetString($loginPage.Content)
           } else {
             [string]$loginPage.Content
           }
-          if ($loginPage.StatusCode -ne 200) { throw "Página de login não respondeu 200." }
+          if ($loginPage.StatusCode -ne 200) { throw "Raiz do PWA não respondeu HTTP 200." }
           if ($loginText -notmatch 'rel="manifest" href="/manifest.webmanifest"') {
-            throw "Página de login não referencia manifest.webmanifest."
+            throw "Raiz do PWA não referencia manifest.webmanifest."
           }
 
           Write-Host "PWA validado no padrão ROUTINE: HTTPS, manifest, MIME, start_url, scope, ícones e service worker."
