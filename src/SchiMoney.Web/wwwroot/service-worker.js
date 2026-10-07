@@ -1,10 +1,10 @@
-const CACHE_NAME = 'schimoney-static-v6';
+const CACHE_NAME = 'schimoney-static-v7';
 const STATIC_ASSETS = [
   '/offline.html',
   '/css/site.css',
   '/js/site.js',
   '/js/pwa.js',
-  '/manifest.json',
+  '/pwa-manifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png'
