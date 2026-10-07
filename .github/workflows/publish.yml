@@ -104,6 +104,8 @@ jobs:
           }
 
           $manifest = Invoke-WebRequest -Uri "$base/pwa-manifest" -UseBasicParsing -TimeoutSec 20
+          Write-Host "PWA manifest raw response:"
+          Write-Host $manifest.Content
           $manifestBody = $manifest.Content | ConvertFrom-Json
 
           if ($manifest.StatusCode -ne 200) { throw "Manifest não respondeu 200." }
