@@ -118,7 +118,7 @@ jobs:
           }
           if ($manifestBody.name -ne "SchiMoney") { throw "Manifest sem nome válido." }
           if ($manifestBody.short_name -ne "SchiMoney") { throw "Manifest sem short_name válido." }
-          if ($manifestBody.id -ne "/") { throw "Manifest com id inválido." }
+          if ($manifestBody.id -ne "/schimoney-app-v2") { throw "Manifest com id inválido." }
           if ($manifestBody.start_url -ne "/") { throw "Manifest com start_url inválido." }
           if ($manifestBody.scope -ne "/") { throw "Manifest com scope inválido." }
           if ($manifestBody.display -ne "standalone") { throw "Manifest sem display standalone." }
@@ -135,7 +135,7 @@ jobs:
             [string]$loginPage.Content
           }
           if ($loginPage.StatusCode -ne 200) { throw "Raiz do PWA não respondeu HTTP 200." }
-          if ($loginText -notmatch 'rel="manifest" href="/manifest.webmanifest"') {
+          if ($loginText -notmatch 'rel="manifest" href="/manifest.webmanifest\?v=20261007-2"') {
             throw "Raiz do PWA não referencia manifest.webmanifest."
           }
 
