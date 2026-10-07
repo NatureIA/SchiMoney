@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c0d0e">
+  <meta name="application-name" content="SchiMoney">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <title>Instalar SchiMoney</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0c0d0e;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;display:grid;place-items:center;padding:24px}
+    main{width:min(520px,100%);background:#151715;border:1px solid #2a2d2a;border-radius:24px;padding:28px}
+    h1{margin:0 0 10px;font-size:32px}.muted{color:#a7ada8;line-height:1.5}.status{margin:22px 0;padding:14px 16px;border-radius:14px;background:#0f1110;border:1px solid #2b302c}
+    button{width:100%;border:0;border-radius:14px;padding:16px;font-size:16px;font-weight:800;background:#fff;color:#111;cursor:pointer}
+    button[disabled]{opacity:.55;cursor:default}.small{font-size:12px;color:#8d948e;margin-top:14px;line-height:1.45}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Instalar SchiMoney</h1>
+  <p class="muted">Esta página verifica a instalação diretamente no Chrome.</p>
+  <div class="status" id="status">Preparando o aplicativo…</div>
+  <button id="installBtn" type="button">Preparar instalação</button>
+  <p class="small" id="details"></p>
+</main>
+<script>
+(() => {
+  const status = document.getElementById('status');
+  const details = document.getElementById('details');
+  const button = document.getElementById('installBtn');
+  let deferredPrompt = null;
+  let interacted = false;
+
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) {
+    status.textContent = 'SchiMoney já está instalado.';
+    button.textContent = 'Abrir SchiMoney';
+    button.onclick = () => location.href = '/';
+    return;
+  }
+
+  function showReady(event) {
+    event.preventDefault();
+    deferredPrompt = event;
+    status.textContent = 'Pronto para instalar.';
+    button.textContent = 'Instalar SchiMoney';
+  }
+
+  window.addEventListener('beforeinstallprompt', showReady);
+  window.addEventListener('appinstalled', () => {
+    status.textContent = 'Instalação concluída.';
+    button.textContent = 'Abrir SchiMoney';
+    button.onclick = () => location.href = '/';
+  });
+
+  async function prepare() {
+    interacted = true;
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.register('/service-worker.js', { scope: '/', updateViaCache: 'none' });
+        await reg.update();
+        await navigator.serviceWorker.ready;
+      }
+      await fetch('/manifest.webmanifest', {cache:'no-store'});
+      status.textContent = deferredPrompt ? 'Pronto para instalar.' : 'Chrome está validando o aplicativo…';
+      button.textContent = deferredPrompt ? 'Instalar SchiMoney' : 'Verificar novamente';
+    } catch (e) {
+      status.textContent = 'Falha ao preparar a instalação.';
+      details.textContent = String(e);
+    }
+  }
+
+  button.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome !== 'accepted') {
+        status.textContent = 'Instalação não concluída. Você pode tentar novamente.';
+      }
+      deferredPrompt = null;
+      return;
+    }
+    await prepare();
+  });
+
+  prepare();
+
+  setTimeout(() => {
+    if (!deferredPrompt && !standalone) {
+      status.textContent = interacted
+        ? 'O Chrome ainda não liberou o prompt de instalação.'
+        : 'Toque em “Preparar instalação”.';
+      details.textContent = 'Conexão segura: ' + (window.isSecureContext ? 'sim' : 'não') +
+        ' · Service Worker: ' + ('serviceWorker' in navigator ? 'sim' : 'não');
+    }
+  }, 3500);
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
-const CACHE_NAME = 'schimoney-static-v8';
+const CACHE_NAME = 'schimoney-static-v9';
 const STATIC_ASSETS = [
   '/offline.html',
+  '/pwa-start.html',
+  '/instalar.html',
   '/css/site.css',
   '/js/site.js',
   '/js/pwa.js',
