@@ -97,7 +97,7 @@ app.UseAuthorization();
 
 app.MapGet("/pwa-manifest", () =>
 {
-    const manifest = """
+    const string manifest = """
 {
   "id": "/",
   "name": "SchiMoney",
