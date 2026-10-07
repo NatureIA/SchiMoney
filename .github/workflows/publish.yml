@@ -142,11 +142,3 @@ jobs:
           Write-Host "PWA validado no padrão ROUTINE: HTTPS, manifest, MIME, start_url, scope, ícones e service worker."
 
 
-
-      - name: Install Playwright diagnostic dependency
-        shell: pwsh
-        run: npm install playwright --no-save
-
-      - name: Chrome PWA installability diagnostics
-        shell: pwsh
-        run: node .github/scripts/pwa-diagnostic.mjs
