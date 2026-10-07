@@ -1,8 +1,8 @@
 (() => {
   if (!('serviceWorker' in navigator)) return;
 
-  const RESET_KEY = 'schimoney-pwa-reset-v6';
-  const CONTROL_KEY = 'schimoney-pwa-controlled-v6';
+  const RESET_KEY = 'schimoney-pwa-reset-v7';
+  const CONTROL_KEY = 'schimoney-pwa-controlled-v7';
 
   let deferredPrompt = null;
   let installButton = null;
@@ -85,7 +85,7 @@
       if (reloading) return;
 
       const registration = await navigator.serviceWorker.register(
-        '/service-worker.js?v=6',
+        '/service-worker.js?v=7',
         {
           scope: '/',
           updateViaCache: 'none'
